@@ -102,8 +102,10 @@
         
         try {
             const snap = await getDocs(collection(db, "giochi"));
-            if (snap.empty) {
-                loading.innerHTML = "Nessun gioco presente nel database. Chiedi all'admin di aggiungerli!";
+            
+            // Se la collezione non esiste o è vuota
+            if (!snap || snap.empty) {
+                loading.innerHTML = "📭 Il catalogo è vuoto. Accedi come Admin per caricare i giochi!";
                 return;
             }
 
@@ -124,8 +126,10 @@
                 `;
             }).join('');
         } catch (e) {
-            console.error(e);
-            loading.innerHTML = "❌ Errore nel caricamento del database.";
+            console.error("Errore dettagliato:", e);
+            // Se l'errore è dovuto ai permessi o alla collezione mancante, 
+            // permettiamo comunque all'utente di vedere il messaggio per loggarsi
+            loading.innerHTML = "👋 Benvenuto! Accedi per gestire il catalogo.";
         }
     }
 
