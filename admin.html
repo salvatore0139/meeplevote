@@ -5,285 +5,197 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Salvatore</title>
     <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #27ae60;
-            --bg: #ecf0f1;
-            --text: #333;
-            --danger: #e74c3c;
-            --blue: #3498db;
-        }
-
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; color: var(--text); display: none; }
-        
-        /* Navbar */
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --danger: #e74c3c; --blue: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); display: none; }
         nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
         nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
-
         header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-
         .container { display: flex; max-width: 1600px; margin: 20px auto; gap: 20px; padding: 0 15px; }
-
-        /* COLONNE */
         aside, main { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
-        
-        /* Sinistra: Gestione Sondaggio Corrente */
-        .col-left { width: 300px; position: sticky; top: 20px; }
-        
-        /* Centro: Storico */
+        .col-left { width: 320px; position: sticky; top: 20px; }
         .col-center { flex-grow: 1; }
-        
-        /* Destra: Nuovo Gioco */
         .col-right { width: 320px; }
-
         h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; font-size: 1.1em; }
-
         .card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-
-        /* Form e Input */
         .form-group { margin-bottom: 10px; }
         label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 3px; }
-        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 0.9em; }
-        
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; color: white; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
         .btn-accent { background: var(--accent); }
         .btn-blue { background: var(--blue); }
         .btn-danger { background: var(--danger); }
-        .btn:disabled { background: #ccc; cursor: not-allowed; }
-
-        /* Tabelle e Liste */
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px; }
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        th { background: #f8f9fa; }
-
         .status-badge { padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
         .status-attivo { background: #d4edda; color: #155724; }
-        .status-chiuso { background: #f8d7da; color: #721c24; }
-
-        #json-output { background: #272822; color: #f8f8f2; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 0.8em; white-space: pre-wrap; margin-top: 10px; display: none; }
-
-        @media (max-width: 1200px) { .container { flex-direction: column; } .col-left, .col-right { width: 100%; position: static; } }
+        @media (max-width: 1200px) { .container { flex-direction: column; } .col-left, .col-right { width: 100%; } }
     </style>
 </head>
 <body id="adminBody">
 
 <nav>
-    <div style="font-weight: bold; font-size: 1.2em;">🛠️ Dashboard Admin</div>
-    <div>
-        <a href="index.html">Torna al Catalogo</a>
-        <a href="sondaggi.html">Vedi Sondaggi</a>
-    </div>
+    <div style="font-weight: bold;">🛠️ Dashboard Admin</div>
+    <div><a href="index.html">Catalogo</a> <a href="sondaggi.html">Sondaggi</a> <a href="#" onclick="logout()">Esci</a></div>
 </nav>
 
-<header>
-    <h1>Gestione Ludoteca & Sondaggi</h1>
-</header>
+<header><h1>Gestione Database & Utenti</h1></header>
 
 <div class="container">
-    
     <aside class="col-left">
-        <h3>🚀 Sondaggio Attivo</h3>
+        <h3>🚀 Sessione Attiva</h3>
         <div id="area-creazione">
-            <div class="form-group">
-                <label>N. Giocatori per la sessione</label>
-                <input type="number" id="new-poll-players" placeholder="Es: 4">
-            </div>
-            <button id="btn-create" class="btn btn-accent" onclick="creaSondaggio()">AVVIA NUOVO</button>
+            <input type="number" id="poll-players" placeholder="N. Giocatori">
+            <button class="btn btn-accent" onclick="startPoll()">AVVIA NUOVO</button>
         </div>
-        
-        <div id="active-poll-details" style="display:none; margin-top: 20px;">
-            <div class="card-inner" style="border-left: 5px solid var(--accent);">
-                <p><strong>Stato:</strong> <span class="status-badge status-attivo">ATTIVO</span></p>
-                <p id="active-info"></p>
-                <button class="btn btn-danger" onclick="chiudiSondaggioAttivo()">CHIUDI SONDAGGIO</button>
-            </div>
+        <div id="active-poll-info" style="display:none;" class="card-inner">
+            <p id="active-p-text"></p>
+            <button class="btn btn-danger" onclick="stopPoll()">CHIUDI ORA</button>
         </div>
+
+        <h3 style="margin-top:20px;">👥 Convalida Utenti</h3>
+        <div id="user-list">Caricamento utenti...</div>
     </aside>
 
     <main class="col-center">
         <h3>📜 Storico Sondaggi</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Giocatori</th>
-                    <th>Stato</th>
-                    <th>Azioni</th>
-                </tr>
-            </thead>
-            <tbody id="history-table">
-                </tbody>
+        <table id="history-table">
+            <thead><tr><th>Data</th><th>P.</th><th>Stato</th><th>Azioni</th></tr></thead>
+            <tbody></tbody>
         </table>
-
-        <div id="votes-report" style="margin-top: 30px; display:none;">
-            <h3 id="votes-title" style="color: var(--blue);">Voti per il Sondaggio</h3>
-            <table id="votes-table">
-                </table>
+        
+        <div id="votes-detail" style="display:none;" class="card-inner">
+            <h4 id="votes-title"></h4>
+            <div id="votes-list"></div>
         </div>
     </main>
 
     <aside class="col-right">
-        <h3>➕ Aggiungi Gioco</h3>
-        <div class="form-group">
-            <label>Titolo Gioco</label>
-            <input type="text" id="g-name" placeholder="Es: 7 Wonders">
-        </div>
-        <div class="form-group">
-            <label>URL Immagine (Thumbnail)</label>
-            <input type="text" id="g-thumb" placeholder="https://...">
-        </div>
-        <div style="display: flex; gap: 5px;">
-            <div class="form-group">
-                <label>Min P.</label>
-                <input type="number" id="g-min" placeholder="2">
-            </div>
-            <div class="form-group">
-                <label>Max P.</label>
-                <input type="number" id="g-max" placeholder="5">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Durata (min)</label>
-            <input type="number" id="g-time" placeholder="60">
-        </div>
-        <div class="form-group">
-            <label>Categoria</label>
-            <input type="text" id="g-type" placeholder="Es: Strategia">
-        </div>
-        <div class="form-group">
-            <label>Difficoltà</label>
-            <select id="g-diff">
-                <option value="Facile">Facile</option>
-                <option value="Medio-Facile">Medio-Facile</option>
-                <option value="Medio">Medio</option>
-                <option value="Medio-Difficile">Medio-Difficile</option>
-                <option value="Difficile">Difficile</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Link BGG</label>
-            <input type="text" id="g-link" placeholder="https://boardgamegeek.com/...">
-        </div>
-        
-        <button class="btn btn-blue" onclick="generaJSONGioco()">GENERA CODICE JSON</button>
-        <div id="json-output"></div>
-        <p style="font-size: 0.7em; color: #666; margin-top: 5px;">Copia il codice e incollalo nel file <b>giochi.json</b></p>
+        <h3>📂 Importa da BGG (XML)</h3>
+        <p style="font-size:0.8em; color:#666;">Carica il file XML esportato da BoardGameGeek per aggiornare il catalogo automaticamente.</p>
+        <input type="file" id="xml-input" accept=".xml" class="form-group">
+        <button class="btn btn-blue" onclick="importBGG()">IMPORTA GIOCHI</button>
+        <hr>
+        <h3>➕ Aggiunta Manuale</h3>
+        <input type="text" id="g-name" placeholder="Titolo">
+        <button class="btn btn-blue" onclick="manualAdd()">AGGIUNGI MANUALE</button>
     </aside>
-
 </div>
 
-<script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBVH44nqpTmS8o8i1mzlEdgUPhAfp8EiG0hvmJOiGigWR0NO3aajMjhtNHcWpwOt4z/exec"; 
-    const PASSWORD_CORRETTA = "newtech1";
-    let datiRicevuti = { sondaggi: [], voti: [] };
+<script type="module">
+    
+    import { db, auth } from "./firebase.js";
 
-    function verificaAccesso() {
-        if (prompt("Inserisci Password Admin:") === PASSWORD_CORRETTA) {
+    const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; // CAMBIA QUESTA
+
+    onAuthStateChanged(auth, (user) => {
+        if (user && user.email === ADMIN_EMAIL) {
             document.body.style.display = 'block';
-            caricaDati();
+            initAdmin();
         } else {
-            alert("Accesso Negato!");
+            alert("Accesso negato. Solo l'admin può accedere.");
             window.location.href = "index.html";
         }
+    });
+
+    let polls = [];
+    let votes = [];
+
+    function initAdmin() {
+        // Listeners
+        onSnapshot(query(collection(db, "polls"), orderBy("timestamp", "desc")), (snap) => {
+            polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
+            renderPolls();
+        });
+
+        onSnapshot(collection(db, "votes"), (snap) => {
+            votes = snap.docs.map(d => d.data());
+        });
+
+        onSnapshot(collection(db, "utenti"), (snap) => {
+            const list = document.getElementById('user-list');
+            list.innerHTML = snap.docs.map(d => {
+                const u = d.data();
+                return `
+                    <div style="font-size:0.85em; margin-bottom:10px; padding:5px; border-bottom:1px solid #eee;">
+                        <b>${u.username}</b> (${u.validato ? '✅ OK' : '⏳'})<br>
+                        ${!u.validato ? `<button onclick="validateUser('${d.id}')" style="font-size:0.7em;">Convalida</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        });
     }
 
-    async function caricaDati() {
-        const res = await fetch(WEB_APP_URL);
-        datiRicevuti = await res.json();
-        renderizzaDashboard();
-    }
+    function renderPolls() {
+        const active = polls.find(p => p.status === "active");
+        document.getElementById('area-creazione').style.display = active ? 'none' : 'block';
+        document.getElementById('active-poll-info').style.display = active ? 'block' : 'none';
+        if(active) document.getElementById('active-p-text').innerHTML = `Sondaggio per <b>${active.players}</b> giocatori`;
 
-    function renderizzaDashboard() {
-        // 1. Gestione Colonna Sinistra (Sondaggio Attivo)
-        const attivo = datiRicevuti.sondaggi.find(s => s.stato === "Attivo");
-        const areaCrea = document.getElementById('area-creazione');
-        const areaDettagli = document.getElementById('active-poll-details');
-        
-        if (attivo) {
-            areaCrea.style.display = 'none';
-            areaDettagli.style.display = 'block';
-            document.getElementById('active-info').innerHTML = `Giocatori: <b>${attivo.giocatori}</b><br><small>Creato: ${attivo.data}</small>`;
-            areaDettagli.dataset.id = attivo.id;
-        } else {
-            areaCrea.style.display = 'block';
-            areaDettagli.style.display = 'none';
-        }
-
-        // 2. Gestione Colonna Centrale (Storico)
-        const historyTable = document.getElementById('history-table');
-        historyTable.innerHTML = datiRicevuti.sondaggi.map(s => `
+        const tbody = document.getElementById('history-table').querySelector('tbody');
+        tbody.innerHTML = polls.map(p => `
             <tr>
-                <td>${s.data.split(',')[0]}</td>
-                <td>${s.giocatori}</td>
-                <td><span class="status-badge ${s.stato === 'Attivo' ? 'status-attivo' : 'status-chiuso'}">${s.stato}</span></td>
-                <td><button class="btn btn-blue" style="padding: 5px 10px; font-size: 0.8em; width: auto;" onclick="vediVoti('${s.id}')">Vedi Voti</button></td>
+                <td>${p.timestamp?.toDate().toLocaleDateString() || '...'}</td>
+                <td>${p.players}</td>
+                <td><span class="status-badge ${p.status === 'active' ? 'status-attivo' : ''}">${p.status}</span></td>
+                <td><button onclick="showVotes('${p.id}')">Voti</button></td>
             </tr>
-        `).reverse().join('');
+        `).join('');
     }
 
-    async function creaSondaggio() {
-        const p = document.getElementById('new-poll-players').value;
-        if(!p) return alert("Inserisci il numero di giocatori!");
-        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ azione: "creaSondaggio", giocatori: p }) });
-        caricaDati();
-    }
+    window.startPoll = async () => {
+        const p = document.getElementById('poll-players').value;
+        if(!p) return;
+        await addDoc(collection(db, "polls"), { players: parseInt(p), status: "active", timestamp: serverTimestamp() });
+    };
 
-    async function chiudiSondaggioAttivo() {
-        const id = document.getElementById('active-poll-details').dataset.id;
-        if(!confirm("Vuoi terminare il sondaggio?")) return;
-        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ azione: "chiudiSondaggio", id: id }) });
-        caricaDati();
-    }
+    window.stopPoll = async () => {
+        const active = polls.find(p => p.status === "active");
+        await updateDoc(doc(db, "polls", active.id), { status: "closed" });
+    };
 
-    function vediVoti(idSondaggio) {
-        const area = document.getElementById('votes-report');
-        const table = document.getElementById('votes-table');
-        const title = document.getElementById('votes-title');
+    window.validateUser = async (uid) => {
+        await updateDoc(doc(db, "utenti", uid), { validato: true });
+    };
+
+    window.showVotes = (id) => {
+        const detail = document.getElementById('votes-detail');
+        const list = document.getElementById('votes-list');
+        detail.style.display = 'block';
+        const filtrati = votes.filter(v => v.pollId === id);
+        list.innerHTML = filtrati.map(v => `<p>👤 <b>${v.username}</b>: ${v.game}</p>`).join('') || "Nessun voto.";
+    };
+
+    window.importBGG = async () => {
+        const file = document.getElementById('xml-input').files[0];
+        if(!file) return alert("Seleziona un file XML!");
         
-        const votiFiltrati = datiRicevuti.voti.filter(v => v.idSondaggio === idSondaggio);
-        
-        title.innerText = `Voti per Sondaggio #${idSondaggio.slice(-4)}`;
-        area.style.display = 'block';
-        
-        if (votiFiltrati.length === 0) {
-            table.innerHTML = "<tr><td>Nessun voto registrato per questo sondaggio.</td></tr>";
-            return;
+        const text = await file.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
+        const items = xml.getElementsByTagName("item");
+        let aggiunti = 0;
+
+        for (let item of items) {
+            const bggId = item.getAttribute("objectid");
+            const docRef = doc(db, "giochi", bggId);
+            const snap = await getDoc(docRef);
+
+            if (!snap.exists()) {
+                await setDoc(docRef, {
+                    name: item.getElementsByTagName("name")[0].textContent,
+                    thumb: item.getElementsByTagName("thumbnail")[0]?.textContent || "",
+                    minP: parseInt(item.getElementsByTagName("stats")[0]?.getAttribute("minplayers")),
+                    maxP: parseInt(item.getElementsByTagName("stats")[0]?.getAttribute("maxplayers")),
+                    time: parseInt(item.getElementsByTagName("stats")[0]?.getAttribute("playingtime")),
+                    type: "Boardgame"
+                });
+                aggiunti++;
+            }
         }
+        alert("Importazione completata! Nuovi giochi: " + aggiunti);
+    };
 
-        table.innerHTML = `
-            <thead><tr><th>Utente</th><th>Gioco Scelto</th></tr></thead>
-            <tbody>
-                ${votiFiltrati.map(v => `<tr><td><b>${v.username}</b></td><td>${v.gioco}</td></tr>`).join('')}
-            </tbody>`;
-        
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    }
-
-    // FUNZIONE AGGIUNTA GIOCO (GENERA JSON)
-    function generaJSONGioco() {
-        const nuovoGioco = {
-            name: document.getElementById('g-name').value,
-            thumb: document.getElementById('g-thumb').value,
-            minP: parseInt(document.getElementById('g-min').value),
-            maxP: parseInt(document.getElementById('g-max').value),
-            time: parseInt(document.getElementById('g-time').value),
-            weight: 2.0, // Valore di default
-            type: document.getElementById('g-type').value,
-            difficulty: document.getElementById('g-diff').value,
-            link: document.getElementById('g-link').value
-        };
-
-        if(!nuovoGioco.name) return alert("Almeno il nome del gioco è obbligatorio!");
-
-        const output = document.getElementById('json-output');
-        output.style.display = 'block';
-        output.innerText = ",\n" + JSON.stringify(nuovoGioco, null, 2);
-        
-        alert("Codice JSON generato in fondo alla colonna destra!");
-    }
-
-    verificaAccesso();
+    window.logout = () => signOut(auth);
 </script>
-
 </body>
 </html>
