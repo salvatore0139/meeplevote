@@ -13,19 +13,18 @@
         
         .container { display: flex; max-width: 1600px; margin: 20px auto; gap: 20px; padding: 0 15px; }
         aside, main { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .col-left { width: 320px; position: sticky; top: 20px; }
+        .col-left { width: 320px; position: sticky; top: 20px; height: fit-content; }
         .col-center { flex-grow: 1; }
-        .col-right { width: 320px; }
 
         /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 450px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 500px; border-radius: 12px; position: relative; max-height: 85vh; overflow-y: auto; }
         
         h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
         .card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
         
         input, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; margin-bottom: 5px; }
         .btn-accent { background: var(--accent); }
         .btn-blue { background: var(--blue); }
         .btn-danger { background: var(--danger); }
@@ -36,11 +35,13 @@
         .status-badge { padding: 4px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
         .status-active { background: #d4edda; color: #155724; }
 
-        /* Stili per la lista voti */
-        .vote-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .vote-game { font-weight: bold; color: var(--primary); flex: 1; }
-        .vote-count { background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin: 0 10px; }
-        .vote-names { font-size: 0.75em; color: #666; flex: 1; text-align: right; }
+        /* Stili Classifica Voti */
+        .vote-item { display: flex; align-items: center; gap: 15px; padding: 10px; border-bottom: 1px solid #eee; }
+        .vote-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: #ddd; }
+        .vote-info { flex-grow: 1; }
+        .vote-info b { display: block; color: var(--primary); font-size: 1.1em; }
+        .vote-info span { font-size: 0.85em; color: #666; }
+        .vote-badge { background: var(--blue); color: white; padding: 5px 12px; border-radius: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -57,7 +58,7 @@
         </div>
         
         <div id="active-poll-info" style="display:none;" class="card-inner">
-            <p style="font-size: 1.1em;">Sondaggio attivo per:<br><strong id="active-p-text" style="color: var(--accent); font-size: 1.4em;"></strong> giocatori</p>
+            <p>Sondaggio attivo per:<br><strong id="active-p-text" style="color: var(--accent); font-size: 1.4em;"></strong> giocatori</p>
             <button class="btn btn-danger" id="btn-stop-poll">CHIUDI SONDAGGIO</button>
         </div>
 
@@ -77,7 +78,6 @@
                     <th>Data</th>
                     <th>Giocatori</th>
                     <th>Stato</th>
-                    <th>Vincitore</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
@@ -95,9 +95,9 @@
 
 <div id="votesModal" class="modal">
     <div class="modal-content">
-        <h3>📊 Risultati Votazione</h3>
-        <div id="votes-container">Caricamento voti...</div>
-        <button class="btn btn-danger" id="close-votes-btn" style="margin-top:15px;">Chiudi</button>
+        <h3>📊 Classifica Voti</h3>
+        <div id="votes-list-container"></div>
+        <button class="btn btn-danger" id="close-votes-btn" style="margin-top:20px;">CHIUDI</button>
     </div>
 </div>
 
@@ -145,11 +145,11 @@
     });
 
     // --- GESTIONE MODAL ---
-    const modal = document.getElementById("gameModal");
+    const gModal = document.getElementById("gameModal");
     const vModal = document.getElementById("votesModal");
     
-    document.getElementById("open-modal-btn").onclick = () => modal.style.display = "block";
-    document.getElementById("close-modal-btn").onclick = () => modal.style.display = "none";
+    document.getElementById("open-modal-btn").onclick = () => gModal.style.display = "block";
+    document.getElementById("close-modal-btn").onclick = () => gModal.style.display = "none";
     document.getElementById("close-votes-btn").onclick = () => vModal.style.display = "none";
 
     function initAdmin() {
@@ -172,42 +172,44 @@
         });
     }
 
-    // --- RECUPERO VOTI SONDAGGIO ---
-    async function loadVotes(pollId) {
+    // --- FUNZIONE RECUPERO VOTI (STRUTTURA CORRETTA) ---
+    async function openVotes(pollId) {
         vModal.style.display = "block";
-        const container = document.getElementById('votes-container');
-        container.innerHTML = "Caricamento in corso...";
+        const container = document.getElementById('votes-list-container');
+        container.innerHTML = "Analisi voti in corso...";
 
         try {
-            const votesSnap = await getDocs(collection(db, `polls/${pollId}/votes`));
-            const tally = {}; // { gameName: [user1, user2...] }
+            const vSnap = await getDocs(collection(db, `polls/${pollId}/votes`));
+            const tally = {}; 
 
-            votesSnap.forEach(voteDoc => {
-                const v = voteDoc.data();
-                if (!tally[v.gameName]) tally[v.gameName] = [];
-                tally[v.gameName].push(v.userName || "Anonimo");
+            vSnap.forEach(vDoc => {
+                const d = vDoc.data();
+                if(!tally[d.game]) tally[d.game] = [];
+                tally[d.game].push(d.username);
             });
 
-            // Ordina per numero di voti descrescente
             const sorted = Object.entries(tally).sort((a, b) => b[1].length - a[1].length);
+            if(sorted.length === 0) { container.innerHTML = "Nessun voto registrato."; return; }
 
-            if (sorted.length === 0) {
-                container.innerHTML = "<p>Nessun voto effettuato in questo sondaggio.</p>";
-                return;
+            let html = "";
+            for(const [gameName, users] of sorted) {
+                // Cerco l'immagine nella collezione 'giochi' usando il campo 'name'
+                const qG = query(collection(db, "giochi"), where("name", "==", gameName));
+                const gSnap = await getDocs(qG);
+                const thumb = !gSnap.empty ? gSnap.docs[0].data().thumb : '';
+
+                html += `
+                    <div class="vote-item">
+                        <img src="${thumb}" class="vote-img" onerror="this.src='https://via.placeholder.com/60?text=?'">
+                        <div class="vote-info">
+                            <b>${gameName}</b>
+                            <span>Votanti: ${users.join(", ")}</span>
+                        </div>
+                        <div class="vote-badge">${users.length}</div>
+                    </div>`;
             }
-
-            container.innerHTML = sorted.map(([game, users]) => `
-                <div class="vote-row">
-                    <span class="vote-game">${game}</span>
-                    <span class="vote-count">${users.length}</span>
-                    <span class="vote-names">${users.join(", ")}</span>
-                </div>
-            `).join('');
-
-        } catch (e) {
-            container.innerHTML = "Errore nel caricamento voti.";
-            console.error(e);
-        }
+            container.innerHTML = html;
+        } catch (e) { container.innerHTML = "Errore nel caricamento."; }
     }
 
     function renderPolls() {
@@ -219,19 +221,16 @@
         const tbody = document.querySelector('#history-table tbody');
         tbody.innerHTML = polls.map(p => `
             <tr>
-                <td>${p.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td>
+                <td>${p.timestamp?.toDate().toLocaleString() || 'Oggi'}</td>
                 <td>${p.players}</td>
                 <td><span class="status-badge ${p.status === 'active' ? 'status-active' : ''}">${p.status.toUpperCase()}</span></td>
-                <td>${p.winner || '-'}</td>
                 <td>
-                    <button class="btn btn-blue btn-view-votes" data-id="${p.id}" style="width:auto; padding:5px 10px; font-size:0.8em;">📊 VOTI</button>
+                    <button class="btn btn-blue btn-view-votes" data-id="${p.id}" style="width:auto; padding:5px 10px; font-size:0.8em;">📊 RISULTATI</button>
                 </td>
             </tr>
         `).join('');
 
-        document.querySelectorAll('.btn-view-votes').forEach(btn => {
-            btn.onclick = () => loadVotes(btn.dataset.id);
-        });
+        document.querySelectorAll('.btn-view-votes').forEach(btn => btn.onclick = () => openVotes(btn.dataset.id));
     }
 
     // --- AZIONI SONDAGGIO ---
@@ -246,7 +245,7 @@
         if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
     };
 
-    // --- IMPORTAZIONE JSON ---
+    // --- IMPORTAZIONE JSON (RECUPERATA) ---
     document.getElementById('btn-import-json').onclick = async () => {
         const file = document.getElementById('json-input').files[0];
         if(!file) return alert("Seleziona il file JSON!");
@@ -262,16 +261,16 @@
                 aggiunti++;
             } else { saltati++; }
         }
-        alert(`Operazione completata!\nNuovi: ${aggiunti}\nGià esistenti: ${saltati}`);
+        alert(`Nuovi: ${aggiunti} | Esistenti: ${saltati}`);
     };
 
-    // --- SALVATAGGIO MANUALE ---
+    // --- SALVATAGGIO MANUALE (RECUPERATO) ---
     document.getElementById('btn-save-manual').onclick = async () => {
         const bid = document.getElementById('m-bggId').value;
         if(!bid) return alert("Inserisci almeno il BGG ID");
         const q = query(collection(db, "giochi"), where("bggId", "==", bid));
         const snap = await getDocs(q);
-        if(!snap.empty) return alert("Questo gioco è già nel database!");
+        if(!snap.empty) return alert("Gioco già presente!");
 
         await addDoc(collection(db, "giochi"), {
             name: document.getElementById('m-name').value,
@@ -286,8 +285,8 @@
             link: `https://boardgamegeek.com/boardgame/${bid}`,
             addedAt: serverTimestamp()
         });
-        alert("Gioco aggiunto con successo!");
-        modal.style.display = "none";
+        alert("Gioco aggiunto!");
+        gModal.style.display = "none";
     };
 
     document.getElementById('btn-logout').onclick = () => signOut(auth);
