@@ -129,6 +129,7 @@
             currentVotes = [];
             renderUI();
             updateRanking();
+            updateParticipants();
         }
     });
 
@@ -136,6 +137,7 @@
 
     function popolaCategorie() {
         const select = document.getElementById('f-type');
+        if (!select || allGames.length === 0) return;
         const types = [...new Set(allGames.map(g => g.type))].sort();
         if (select.children.length > 1) return;
         types.forEach(t => {
@@ -159,68 +161,37 @@
 
         status.innerHTML = `✅ Sondaggio per ${activePoll.players} Giocatori`;
         
+        // Filtro giochi
         let filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
         if (fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
         if (fTime) filtrati = filtrati.filter(g => g.time <= parseInt(fTime));
 
-function renderUI() {
-    const grid = document.getElementById('game-grid');
-    const status = document.getElementById('status-sondaggio');
-    const fType = document.getElementById('f-type').value;
-    const fTime = document.getElementById('f-time').value;
+        grid.innerHTML = filtrati.map(g => {
+            const mioVotoPerQuestoGioco = currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
+            const canVote = currentUser && (userDoc?.validato || currentUser.email === "salvatoredidato01@gmail.com");
+            const isHighlighted = selectedUserHighlight && currentVotes.some(v => v.userId === selectedUserHighlight && v.game === g.name);
 
-    if (!activePoll) {
-        status.innerHTML = "😴 Nessun sondaggio attivo.";
-        grid.innerHTML = "";
-        return;
-    }
-
-    status.innerHTML = `✅ Sondaggio per ${activePoll.players} Giocatori`;
-    
-    // Filtriamo i giochi in base al numero di giocatori del sondaggio + i filtri scelti dall'utente
-    let filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
-    if (fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
-    if (fTime) filtrati = filtrati.filter(g => g.time <= parseInt(fTime));
-
-    // QUI VA IL BLOCCO CHE HAI SCRITTO TU:
-    grid.innerHTML = filtrati.map(g => {
-        // 1. Cerchiamo se l'utente loggato ha votato questo specifico gioco
-        const mioVotoPerQuestoGioco = currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
-        
-        // 2. Controllo permessi (Validato o Admin)
-        const canVote = currentUser && (userDoc?.validato || currentUser.email === "salvatoredidato01@gmail.com");
-
-        // Calcoliamo se il gioco deve essere evidenziato perché votato dall'utente cliccato nella sidebar
-        const isHighlighted = selectedUserHighlight && currentVotes.some(v => v.userId === selectedUserHighlight && v.game === g.name);
-
-        return `
-            <div class="game-card ${isHighlighted ? 'highlight' : ''}">
-                <img src="${g.thumb}">
-                <div class="game-card-content">
-                    <h4>${g.name}</h4>
-                    <p style="font-size:0.75em; color:#777;">${g.type} | ${g.time} min</p>
-                    
-                    ${mioVotoPerQuestoGioco ? 
-                        // SE HO GIÀ VOTATO: Mostra il tasto rosso per cancellare
-                        `<button class="btn-danger" onclick="annullaVoto('${mioVotoPerQuestoGioco.id}')">
-                            ❌ ANNULLA MIO VOTO
-                        </button>` :
-                        // SE NON HO VOTATO: Mostra il tasto verde (se ho i permessi)
-                        `<button class="btn-vota" ${!canVote ? 'disabled' : ''} onclick="vota('${g.name.replace(/'/g, "\\'")}')">
-                            ${!currentUser ? 'ACCEDI PER VOTARE' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
-                        </button>`
-                    }
-                </div>
-            </div>`;
-    }).join('');
-}
+            return `
+                <div class="game-card ${isHighlighted ? 'highlight' : ''}">
+                    <img src="${g.thumb}">
+                    <div class="game-card-content">
+                        <h4>${g.name}</h4>
+                        <p style="font-size:0.75em; color:#777;">${g.type} | ${g.time} min</p>
+                        ${mioVotoPerQuestoGioco ? 
+                            `<button class="btn-danger" onclick="annullaVoto('${mioVotoPerQuestoGioco.id}')">❌ ANNULLA MIO VOTO</button>` :
+                            `<button class="btn-vota" ${!canVote ? 'disabled' : ''} onclick="vota('${g.name.replace(/'/g, "\\'")}')">
+                                ${!currentUser ? 'ACCEDI PER VOTARE' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
+                            </button>`
+                        }
+                    </div>
+                </div>`;
+        }).join('');
     }
 
     function updateRanking() {
         const counts = {};
         currentVotes.forEach(v => counts[v.game] = (counts[v.game] || 0) + 1);
         const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-        
         document.getElementById('classifica-voti').innerHTML = sorted.map(([g, v]) => `
             <div class="rank-item">
                 <span>${g}</span> <b style="color:var(--orange)">${v}</b>
@@ -229,10 +200,7 @@ function renderUI() {
 
     function updateParticipants() {
         const users = {};
-        currentVotes.forEach(v => {
-            users[v.userId] = v.username;
-        });
-
+        currentVotes.forEach(v => { users[v.userId] = v.username; });
         const container = document.getElementById('user-list');
         container.innerHTML = Object.entries(users).map(([id, name]) => `
             <span class="user-tag ${selectedUserHighlight === id ? 'active' : ''}" onclick="toggleHighlight('${id}')">
@@ -241,7 +209,7 @@ function renderUI() {
         `).join('') || "Nessun partecipante.";
     }
 
-    // --- Funzioni Globali ---
+    // --- Funzioni Globali (attaccate a window per essere usate negli onclick HTML) ---
 
     window.toggleHighlight = (userId) => {
         selectedUserHighlight = (selectedUserHighlight === userId) ? null : userId;
@@ -250,7 +218,7 @@ function renderUI() {
     };
 
     window.vota = async (gameName) => {
-        if (!currentUser) return;
+        if (!currentUser || !activePoll) return;
         try {
             await addDoc(collection(db, "polls", activePoll.id, "votes"), {
                 userId: currentUser.uid,
@@ -261,23 +229,16 @@ function renderUI() {
         } catch (e) { alert("Errore nel voto: " + e.message); }
     };
 
-window.annullaVoto = async (votoId) => {
-    if (!activePoll) return;
-    
-    // Chiediamo conferma per evitare click accidentali
-    if(confirm("Vuoi davvero rimuovere questo voto?")) {
-        try {
-            // Puntiamo al documento specifico dentro la sottocollezione 'votes'
-            await deleteDoc(doc(db, "polls", activePoll.id, "votes", votoId));
-            // Non serve ricaricare la pagina, onSnapshot aggiornerà la griglia da solo!
-        } catch (e) {
-            console.error("Errore cancellazione:", e);
-            alert("Errore: non hai i permessi per cancellare questo voto.");
+    window.annullaVoto = async (votoId) => {
+        if (!activePoll) return;
+        if(confirm("Vuoi davvero rimuovere questo voto?")) {
+            try {
+                await deleteDoc(doc(db, "polls", activePoll.id, "votes", votoId));
+            } catch (e) { alert("Errore: " + e.message); }
         }
-    }
-};
+    };
 
-    // Eventi per i filtri
+    // Eventi filtri
     document.getElementById('f-type').addEventListener('change', renderUI);
     document.getElementById('f-time').addEventListener('input', renderUI);
 
