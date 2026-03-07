@@ -83,11 +83,24 @@
 
 <script type="module">
     import { db, auth } from "./firebase.js";
-    import { collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+        collection, 
+        doc, 
+        getDocs, 
+        addDoc, 
+        updateDoc, 
+        onSnapshot, 
+        query, 
+        orderBy, 
+        serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    // RENDIAMO TUTTO DISPONIBILE GLOBALMENTE
+    window.db = db;
+    window.auth = auth;
+
     const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; 
-    window.db = db; // Necessario per rendere db visibile fuori dal modulo
 
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === ADMIN_EMAIL) {
@@ -102,27 +115,23 @@
     let polls = [];
 
     function initAdmin() {
-        // Listener Sondaggi (Storico)
-        onSnapshot(query(collection(db, "polls"), orderBy("timestamp", "desc")), (snap) => {
+        // Listener Storico Sondaggi
+        onSnapshot(query(collection(window.db, "polls"), orderBy("timestamp", "desc")), (snap) => {
             polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderPolls();
         });
 
         // Listener Utenti
-        onSnapshot(collection(db, "utenti"), (snap) => {
+        onSnapshot(collection(window.db, "utenti"), (snap) => {
             const list = document.getElementById('user-list');
-            if (snap.empty) {
-                list.innerHTML = "Nessun utente registrato.";
-                return;
-            }
+            if (snap.empty) { list.innerHTML = "Nessun utente."; return; }
             list.innerHTML = snap.docs.map(d => {
                 const u = d.data();
                 return `
                     <div style="font-size:0.85em; margin-bottom:10px; padding:5px; border-bottom:1px solid #eee;">
                         <b>${u.username}</b> (${u.validato ? '✅ OK' : '⏳'})<br>
                         ${!u.validato ? `<button onclick="validateUser('${d.id}')" style="font-size:0.7em;">Convalida</button>` : ''}
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         });
     }
@@ -144,81 +153,91 @@
         `).join('');
     }
 
-    // --- FUNZIONI WINDOW (COLLEGATE AI BOTTONI) ---
+    // --- FUNZIONI WINDOW (BLINDATE) ---
 
     window.startPoll = async () => {
         const p = document.getElementById('poll-players').value;
         if(!p) return alert("Inserisci il numero di giocatori!");
-        await addDoc(collection(db, "polls"), { 
-            players: parseInt(p), 
-            status: "active", 
-            timestamp: serverTimestamp() 
-        });
+        
+        try {
+            // Usiamo esplicitamente window.db
+            await addDoc(collection(window.db, "polls"), { 
+                players: parseInt(p), 
+                status: "active", 
+                timestamp: serverTimestamp() 
+            });
+            alert("Sondaggio avviato!");
+        } catch (e) { alert("Errore: " + e.message); }
     };
 
     window.stopPoll = async () => {
         const active = polls.find(p => p.status === "active");
-        if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
+        if(active) {
+            await updateDoc(doc(window.db, "polls", active.id), { status: "closed" });
+        }
     };
 
     window.validateUser = async (uid) => {
-        await updateDoc(doc(db, "utenti", uid), { validato: true });
+        await updateDoc(doc(window.db, "utenti", uid), { validato: true });
     };
 
     window.showVotes = async (pollId) => {
         const detail = document.getElementById('votes-detail');
         const list = document.getElementById('votes-list');
         detail.style.display = 'block';
-        list.innerHTML = "<i>Caricamento...</i>";
-        const votiSnap = await getDocs(collection(db, "polls", pollId, "votes"));
+        list.innerHTML = "Caricamento...";
+        const votiSnap = await getDocs(collection(window.db, "polls", pollId, "votes"));
         list.innerHTML = votiSnap.empty ? "Nessun voto." : votiSnap.docs.map(d => `<p>👤 <b>${d.data().username}</b>: ${d.data().game}</p>`).join('');
     };
 
-    // Corretto: ora legge il file dall'input "xml-input"
     window.importBGG = async () => {
         const fileInput = document.getElementById('xml-input');
         const file = fileInput.files[0];
-        if (!file) return alert("Seleziona prima un file XML!");
+        if (!file) return alert("Seleziona il file XML!");
 
-        const text = await file.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "text/xml");
-        const items = xml.getElementsByTagName("item");
-        let aggiunti = 0;
-
-        for (let item of items) {
-            const name = item.getElementsByTagName("name")[0]?.textContent;
-            const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent;
-            const stats = item.getElementsByTagName("stats")[0];
+        try {
+            const text = await file.text();
+            const parser = new DOMParser();
+            const xml = parser.parseFromString(text, "text/xml");
+            const items = xml.getElementsByTagName("item");
             
-            try {
-                await addDoc(collection(db, "giochi"), {
+            alert("Importazione avviata... clicca OK e attendi la conferma finale.");
+            let aggiunti = 0;
+
+            for (let item of items) {
+                const name = item.getElementsByTagName("name")[0]?.textContent;
+                const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent || "";
+                const stats = item.getElementsByTagName("stats")[0];
+                
+                // Salvataggio nel database
+                await addDoc(collection(window.db, "giochi"), {
                     name: name,
-                    thumb: thumb || "",
+                    thumb: thumb,
                     minP: parseInt(stats?.getAttribute("minplayers")) || 1,
                     maxP: parseInt(stats?.getAttribute("maxplayers")) || 1,
                     time: parseInt(stats?.getAttribute("playingtime")) || 30,
                     addedAt: serverTimestamp()
                 });
                 aggiunti++;
-            } catch (e) { console.error(e); }
+            }
+            alert("✅ Successo! Importati " + aggiunti + " giochi.");
+        } catch (e) {
+            console.error(e);
+            alert("Errore durante l'importazione: " + e.message);
         }
-        alert("Importati " + aggiunti + " giochi!");
     };
 
     window.manualAdd = async () => {
         const name = document.getElementById('g-name').value;
         if(!name) return;
-        await addDoc(collection(db, "giochi"), { 
-            name: name, 
-            minP: 1, maxP: 99, time: 60, thumb: "", 
-            addedAt: serverTimestamp() 
+        await addDoc(collection(window.db, "giochi"), { 
+            name: name, minP: 1, maxP: 99, time: 60, thumb: "", addedAt: serverTimestamp() 
         });
         document.getElementById('g-name').value = "";
-        alert("Gioco aggiunto!");
+        alert("Aggiunto!");
     };
 
-    window.logout = () => signOut(auth);
+    window.logout = () => signOut(window.auth);
 </script>
 </body>
 </html>
