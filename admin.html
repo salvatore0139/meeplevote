@@ -1,41 +1,41 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Salvatore</title>
-    <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --danger: #e74c3c; --blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); display: none; }
-        nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
-        nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
-        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .container { display: flex; max-width: 1600px; margin: 20px auto; gap: 20px; padding: 0 15px; }
-        aside, main { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
-        .col-left { width: 320px; position: sticky; top: 20px; }
-        .col-center { flex-grow: 1; }
-        .col-right { width: 320px; }
-        h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; font-size: 1.1em; }
-        .card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-        .form-group { margin-bottom: 10px; }
-        label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 3px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
-        .btn-accent { background: var(--accent); }
-        .btn-blue { background: var(--blue); }
-        .btn-danger { background: var(--danger); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        .status-badge { padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
-        .status-attivo { background: #d4edda; color: #155724; }
-        @media (max-width: 1200px) { .container { flex-direction: column; } .col-left, .col-right { width: 100%; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Salvatore</title>
+<style>
+:root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --danger: #e74c3c; --blue: #3498db; }
+body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); display: none; }
+nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
+nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.container { display: flex; max-width: 1600px; margin: 20px auto; gap: 20px; padding: 0 15px; }
+aside, main { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
+.col-left { width: 320px; position: sticky; top: 20px; }
+.col-center { flex-grow: 1; }
+.col-right { width: 320px; }
+h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; font-size: 1.1em; }
+.card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
+.form-group { margin-bottom: 10px; }
+label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 3px; }
+input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+.btn { width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
+.btn-accent { background: var(--accent); }
+.btn-blue { background: var(--blue); }
+.btn-danger { background: var(--danger); }
+table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-bottom: 20px; }
+th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+.status-badge { padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
+.status-attivo { background: #d4edda; color: #155724; }
+@media (max-width: 1200px) { .container { flex-direction: column; } .col-left, .col-right { width: 100%; } }
+</style>
 </head>
 <body id="adminBody">
 
 <nav>
     <div style="font-weight: bold;">🛠️ Dashboard Admin</div>
-    <div><a href="index.html">Catalogo</a> <a href="sondaggi.html">Sondaggi</a> <a href="#" onclick="logout()">Esci</a></div>
+    <div><a href="index.html">Catalogo</a> <a href="sondaggi.html">Sondaggi</a> <a href="#" id="logout-btn">Esci</a></div>
 </nav>
 
 <header><h1>Gestione Database & Utenti</h1></header>
@@ -45,11 +45,11 @@
         <h3>🚀 Sessione Attiva</h3>
         <div id="area-creazione">
             <input type="number" id="poll-players" placeholder="N. Giocatori">
-            <button class="btn btn-accent" onclick="startPoll()">AVVIA NUOVO</button>
+            <button id="start-poll-btn" class="btn btn-accent">AVVIA NUOVO</button>
         </div>
         <div id="active-poll-info" style="display:none;" class="card-inner">
             <p id="active-p-text"></p>
-            <button class="btn btn-danger" onclick="stopPoll()">CHIUDI ORA</button>
+            <button id="stop-poll-btn" class="btn btn-danger">CHIUDI ORA</button>
         </div>
 
         <h3 style="margin-top:20px;">👥 Convalida Utenti</h3>
@@ -73,171 +73,160 @@
         <h3>📂 Importa da BGG (XML)</h3>
         <p style="font-size:0.8em; color:#666;">Carica il file XML di BGG per aggiornare il catalogo.</p>
         <input type="file" id="xml-input" accept=".xml" class="form-group">
-        <button class="btn btn-blue" onclick="importBGG()">IMPORTA GIOCHI</button>
+        <button id="import-bgg-btn" class="btn btn-blue">IMPORTA GIOCHI</button>
         <hr>
         <h3>➕ Aggiunta Manuale</h3>
         <input type="text" id="g-name" placeholder="Titolo">
-        <button class="btn btn-blue" onclick="manualAdd()">AGGIUNGI MANUALE</button>
+        <button id="manual-add-btn" class="btn btn-blue">AGGIUNGI MANUALE</button>
     </aside>
 </div>
 
 <script type="module">
-    import { db, auth } from "./firebase.js";
-    import { 
-        collection, 
-        doc, 
-        getDocs, 
-        addDoc, 
-        updateDoc, 
-        onSnapshot, 
-        query, 
-        orderBy, 
-        serverTimestamp 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { db, auth } from "./firebase.js";
+import { collection, doc, getDocs, addDoc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // RENDIAMO TUTTO DISPONIBILE GLOBALMENTE
-    window.db = db;
-    window.auth = auth;
-    console.log("Controllo Database:", window.db);
-    const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; 
+const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
 
-    onAuthStateChanged(auth, (user) => {
-        if (user && user.email === ADMIN_EMAIL) {
-            document.body.style.display = 'block';
-            initAdmin();
-        } else {
-            alert("Accesso negato. Solo l'admin può accedere.");
-            window.location.href = "index.html";
+const startBtn = document.getElementById("start-poll-btn");
+const stopBtn = document.getElementById("stop-poll-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const importBtn = document.getElementById("import-bgg-btn");
+const manualAddBtn = document.getElementById("manual-add-btn");
+
+let polls = [];
+
+// --- FUNZIONI ---
+async function startPoll() {
+    const p = parseInt(document.getElementById("poll-players").value);
+    if (!p) return alert("Inserisci il numero di giocatori!");
+    try {
+        await addDoc(collection(db, "polls"), { players: p, status: "active", timestamp: serverTimestamp() });
+        alert("Sondaggio avviato!");
+    } catch(e) { alert("Errore: " + e.message); }
+}
+
+async function stopPoll() {
+    const active = polls.find(p => p.status === "active");
+    if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
+}
+
+async function validateUser(uid) {
+    await updateDoc(doc(db, "utenti", uid), { validato: true });
+}
+
+async function showVotes(pollId) {
+    const detail = document.getElementById('votes-detail');
+    const list = document.getElementById('votes-list');
+    detail.style.display = 'block';
+    list.innerHTML = "Caricamento...";
+    const votiSnap = await getDocs(collection(db, "polls", pollId, "votes"));
+    list.innerHTML = votiSnap.empty ? "Nessun voto." : votiSnap.docs.map(d => `<p>👤 <b>${d.data().username}</b>: ${d.data().game}</p>`).join('');
+}
+
+async function importBGG() {
+    const fileInput = document.getElementById('xml-input');
+    const file = fileInput.files[0];
+    if(!file) return alert("Seleziona il file XML!");
+    try {
+        const text = await file.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
+        const items = xml.getElementsByTagName("item");
+        alert("Importazione avviata...");
+        let count = 0;
+        for(let item of items){
+            const name = item.getElementsByTagName("name")[0]?.textContent;
+            const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent || "";
+            const stats = item.getElementsByTagName("stats")[0];
+            await addDoc(collection(db, "giochi"), {
+                name,
+                thumb,
+                minP: parseInt(stats?.getAttribute("minplayers")) || 1,
+                maxP: parseInt(stats?.getAttribute("maxplayers")) || 1,
+                time: parseInt(stats?.getAttribute("playingtime")) || 30,
+                addedAt: serverTimestamp()
+            });
+            count++;
         }
+        alert(`✅ Successo! Importati ${count} giochi.`);
+    } catch(e) { alert("Errore: " + e.message); console.error(e); }
+}
+
+async function manualAdd() {
+    const name = document.getElementById('g-name').value;
+    if(!name) return;
+    await addDoc(collection(db, "giochi"), { name, minP:1, maxP:99, time:60, thumb:"", addedAt: serverTimestamp() });
+    document.getElementById('g-name').value = "";
+    alert("Aggiunto!");
+}
+
+function renderPolls() {
+    const active = polls.find(p => p.status === "active");
+    document.getElementById('area-creazione').style.display = active ? 'none' : 'block';
+    document.getElementById('active-poll-info').style.display = active ? 'block' : 'none';
+    if(active) document.getElementById('active-p-text').innerHTML = `Sondaggio per <b>${active.players}</b> giocatori`;
+
+    const tbody = document.getElementById('history-table').querySelector('tbody');
+    tbody.innerHTML = polls.map(p => `
+        <tr>
+            <td>${p.timestamp?.toDate().toLocaleDateString() || '...'}</td>
+            <td>${p.players}</td>
+            <td><span class="status-badge ${p.status === 'active' ? 'status-attivo' : ''}">${p.status}</span></td>
+            <td><button class="view-votes-btn" data-id="${p.id}">🔎 Vedi Voti</button></td>
+        </tr>
+    `).join('');
+
+    // aggiungo listener per pulsanti vedi voti
+    document.querySelectorAll('.view-votes-btn').forEach(btn => {
+        btn.addEventListener('click', () => showVotes(btn.dataset.id));
+    });
+}
+
+// --- INIT ---
+onAuthStateChanged(auth, (user) => {
+    if(user && user.email === ADMIN_EMAIL){
+        document.body.style.display = 'block';
+        initAdmin();
+    } else {
+        alert("Accesso negato. Solo l'admin può accedere.");
+        window.location.href = "index.html";
+    }
+});
+
+function initAdmin() {
+    // Listener sondaggi
+    onSnapshot(query(collection(db,"polls"), orderBy("timestamp","desc")), snap => {
+        polls = snap.docs.map(d => ({id:d.id,...d.data()}));
+        renderPolls();
     });
 
-    let polls = [];
+    // Listener utenti
+    onSnapshot(collection(db,"utenti"), snap => {
+        const list = document.getElementById('user-list');
+        if(snap.empty){ list.innerHTML="Nessun utente."; return; }
+        list.innerHTML = snap.docs.map(d=>{
+            const u = d.data();
+            return `<div style="font-size:0.85em;margin-bottom:10px;padding:5px;border-bottom:1px solid #eee;">
+                <b>${u.username}</b> (${u.validato ? '✅ OK':'⏳'})<br>
+                ${!u.validato ? `<button class="validate-user-btn" data-id="${d.id}" style="font-size:0.7em;">Convalida</button>` : ''}
+            </div>`;
+        }).join('');
 
-    function initAdmin() {
-        // Listener Storico Sondaggi
-        onSnapshot(query(collection(window.db, "polls"), orderBy("timestamp", "desc")), (snap) => {
-            polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderPolls();
+        // listener convalida utenti
+        document.querySelectorAll('.validate-user-btn').forEach(btn=>{
+            btn.addEventListener('click', ()=> validateUser(btn.dataset.id));
         });
+    });
+}
 
-        // Listener Utenti
-        onSnapshot(collection(window.db, "utenti"), (snap) => {
-            const list = document.getElementById('user-list');
-            if (snap.empty) { list.innerHTML = "Nessun utente."; return; }
-            list.innerHTML = snap.docs.map(d => {
-                const u = d.data();
-                return `
-                    <div style="font-size:0.85em; margin-bottom:10px; padding:5px; border-bottom:1px solid #eee;">
-                        <b>${u.username}</b> (${u.validato ? '✅ OK' : '⏳'})<br>
-                        ${!u.validato ? `<button onclick="validateUser('${d.id}')" style="font-size:0.7em;">Convalida</button>` : ''}
-                    </div>`;
-            }).join('');
-        });
-    }
+// --- EVENT LISTENERS ---
+startBtn.addEventListener('click', startPoll);
+stopBtn.addEventListener('click', stopPoll);
+logoutBtn.addEventListener('click', ()=> signOut(auth));
+importBtn.addEventListener('click', importBGG);
+manualAddBtn.addEventListener('click', manualAdd);
 
-    function renderPolls() {
-        const active = polls.find(p => p.status === "active");
-        document.getElementById('area-creazione').style.display = active ? 'none' : 'block';
-        document.getElementById('active-poll-info').style.display = active ? 'block' : 'none';
-        if(active) document.getElementById('active-p-text').innerHTML = `Sondaggio per <b>${active.players}</b> giocatori`;
-
-        const tbody = document.getElementById('history-table').querySelector('tbody');
-        tbody.innerHTML = polls.map(p => `
-            <tr>
-                <td>${p.timestamp?.toDate().toLocaleDateString() || '...'}</td>
-                <td>${p.players}</td>
-                <td><span class="status-badge ${p.status === 'active' ? 'status-attivo' : ''}">${p.status}</span></td>
-                <td><button onclick="showVotes('${p.id}')">🔎 Vedi Voti</button></td>
-            </tr>
-        `).join('');
-    }
-
-    // --- FUNZIONI WINDOW (BLINDATE) ---
-
-    window.startPoll = async () => {
-        const p = document.getElementById('poll-players').value;
-        if(!p) return alert("Inserisci il numero di giocatori!");
-        
-        try {
-            // Usiamo esplicitamente window.db
-            await addDoc(collection(window.db, "polls"), { 
-                players: parseInt(p), 
-                status: "active", 
-                timestamp: serverTimestamp() 
-            });
-            alert("Sondaggio avviato!");
-        } catch (e) { alert("Errore: " + e.message); }
-    };
-
-    window.stopPoll = async () => {
-        const active = polls.find(p => p.status === "active");
-        if(active) {
-            await updateDoc(doc(window.db, "polls", active.id), { status: "closed" });
-        }
-    };
-
-    window.validateUser = async (uid) => {
-        await updateDoc(doc(window.db, "utenti", uid), { validato: true });
-    };
-
-    window.showVotes = async (pollId) => {
-        const detail = document.getElementById('votes-detail');
-        const list = document.getElementById('votes-list');
-        detail.style.display = 'block';
-        list.innerHTML = "Caricamento...";
-        const votiSnap = await getDocs(collection(window.db, "polls", pollId, "votes"));
-        list.innerHTML = votiSnap.empty ? "Nessun voto." : votiSnap.docs.map(d => `<p>👤 <b>${d.data().username}</b>: ${d.data().game}</p>`).join('');
-    };
-
-    window.importBGG = async () => {
-        const fileInput = document.getElementById('xml-input');
-        const file = fileInput.files[0];
-        if (!file) return alert("Seleziona il file XML!");
-
-        try {
-            const text = await file.text();
-            const parser = new DOMParser();
-            const xml = parser.parseFromString(text, "text/xml");
-            const items = xml.getElementsByTagName("item");
-            
-            alert("Importazione avviata... clicca OK e attendi la conferma finale.");
-            let aggiunti = 0;
-
-            for (let item of items) {
-                const name = item.getElementsByTagName("name")[0]?.textContent;
-                const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent || "";
-                const stats = item.getElementsByTagName("stats")[0];
-                
-                // Salvataggio nel database
-                await addDoc(collection(window.db, "giochi"), {
-                    name: name,
-                    thumb: thumb,
-                    minP: parseInt(stats?.getAttribute("minplayers")) || 1,
-                    maxP: parseInt(stats?.getAttribute("maxplayers")) || 1,
-                    time: parseInt(stats?.getAttribute("playingtime")) || 30,
-                    addedAt: serverTimestamp()
-                });
-                aggiunti++;
-            }
-            alert("✅ Successo! Importati " + aggiunti + " giochi.");
-        } catch (e) {
-            console.error(e);
-            alert("Errore durante l'importazione: " + e.message);
-        }
-    };
-
-    window.manualAdd = async () => {
-        const name = document.getElementById('g-name').value;
-        if(!name) return;
-        await addDoc(collection(window.db, "giochi"), { 
-            name: name, minP: 1, maxP: 99, time: 60, thumb: "", addedAt: serverTimestamp() 
-        });
-        document.getElementById('g-name').value = "";
-        alert("Aggiunto!");
-    };
-
-    window.logout = () => signOut(window.auth);
 </script>
 </body>
 </html>
