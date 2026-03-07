@@ -64,14 +64,14 @@
         </table>
         
         <div id="votes-detail" style="display:none;" class="card-inner">
-            <h4 id="votes-title"></h4>
+            <h4 id="votes-title">Dettaglio Voti</h4>
             <div id="votes-list"></div>
         </div>
     </main>
 
     <aside class="col-right">
         <h3>📂 Importa da BGG (XML)</h3>
-        <p style="font-size:0.8em; color:#666;">Carica il file XML esportato da BoardGameGeek per aggiornare il catalogo automaticamente.</p>
+        <p style="font-size:0.8em; color:#666;">Carica il file XML di BGG per aggiornare il catalogo.</p>
         <input type="file" id="xml-input" accept=".xml" class="form-group">
         <button class="btn btn-blue" onclick="importBGG()">IMPORTA GIOCHI</button>
         <hr>
@@ -82,10 +82,11 @@
 </div>
 
 <script type="module">
-    
     import { db, auth } from "./firebase.js";
+    import { collection, doc, getDoc, getDocs, setDoc, updateDoc, onSnapshot, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; // CAMBIA QUESTA
+    const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; 
 
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === ADMIN_EMAIL) {
@@ -98,19 +99,15 @@
     });
 
     let polls = [];
-    let votes = [];
 
     function initAdmin() {
-        // Listeners
+        // Listener Sondaggi (Storico)
         onSnapshot(query(collection(db, "polls"), orderBy("timestamp", "desc")), (snap) => {
             polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
             renderPolls();
         });
 
-        onSnapshot(collection(db, "votes"), (snap) => {
-            votes = snap.docs.map(d => d.data());
-        });
-
+        // Listener Utenti
         onSnapshot(collection(db, "utenti"), (snap) => {
             const list = document.getElementById('user-list');
             list.innerHTML = snap.docs.map(d => {
@@ -137,7 +134,7 @@
                 <td>${p.timestamp?.toDate().toLocaleDateString() || '...'}</td>
                 <td>${p.players}</td>
                 <td><span class="status-badge ${p.status === 'active' ? 'status-attivo' : ''}">${p.status}</span></td>
-                <td><button onclick="showVotes('${p.id}')">Voti</button></td>
+                <td><button onclick="showVotes('${p.id}')">🔎 Vedi Voti</button></td>
             </tr>
         `).join('');
     }
@@ -145,24 +142,48 @@
     window.startPoll = async () => {
         const p = document.getElementById('poll-players').value;
         if(!p) return;
-        await addDoc(collection(db, "polls"), { players: parseInt(p), status: "active", timestamp: serverTimestamp() });
+        await addDoc(collection(db, "polls"), { 
+            players: parseInt(p), 
+            status: "active", 
+            timestamp: serverTimestamp() 
+        });
     };
 
     window.stopPoll = async () => {
         const active = polls.find(p => p.status === "active");
-        await updateDoc(doc(db, "polls", active.id), { status: "closed" });
+        if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
     };
 
     window.validateUser = async (uid) => {
         await updateDoc(doc(db, "utenti", uid), { validato: true });
     };
 
-    window.showVotes = (id) => {
+    // NUOVA LOGICA: Scarica i voti solo per il sondaggio selezionato
+    window.showVotes = async (pollId) => {
         const detail = document.getElementById('votes-detail');
         const list = document.getElementById('votes-list');
         detail.style.display = 'block';
-        const filtrati = votes.filter(v => v.pollId === id);
-        list.innerHTML = filtrati.map(v => `<p>👤 <b>${v.username}</b>: ${v.game}</p>`).join('') || "Nessun voto.";
+        list.innerHTML = "<i>Caricamento voti...</i>";
+        
+        try {
+            // Accediamo alla sottocollezione specifica
+            const votiSnap = await getDocs(collection(db, "polls", pollId, "votes"));
+            
+            if (votiSnap.empty) {
+                list.innerHTML = "Nessun voto registrato per questo sondaggio.";
+                return;
+            }
+
+            list.innerHTML = votiSnap.docs.map(d => {
+                const v = d.data();
+                return `<p style="border-bottom: 1px solid #f0f0f0; padding: 5px 0;">
+                            👤 <b>${v.username}</b>: <span style="color:var(--accent)">${v.game}</span>
+                        </p>`;
+            }).join('');
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = "Errore nel caricamento voti.";
+        }
     };
 
     window.importBGG = async () => {
