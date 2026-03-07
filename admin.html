@@ -87,6 +87,7 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; 
+    window.db = db; // Necessario per rendere db visibile fuori dal modulo
 
     onAuthStateChanged(auth, (user) => {
         if (user && user.email === ADMIN_EMAIL) {
@@ -107,16 +108,15 @@
             renderPolls();
         });
 
-// Listener Utenti con gestione collezione vuota
+        // Listener Utenti
         onSnapshot(collection(db, "utenti"), (snap) => {
             const list = document.getElementById('user-list');
             if (snap.empty) {
-                list.innerHTML = "Nessun utente registrato oltre a te.";
+                list.innerHTML = "Nessun utente registrato.";
                 return;
             }
             list.innerHTML = snap.docs.map(d => {
                 const u = d.data();
-                // Saltiamo noi stessi dalla lista se vogliamo
                 return `
                     <div style="font-size:0.85em; margin-bottom:10px; padding:5px; border-bottom:1px solid #eee;">
                         <b>${u.username}</b> (${u.validato ? '✅ OK' : '⏳'})<br>
@@ -144,9 +144,11 @@
         `).join('');
     }
 
+    // --- FUNZIONI WINDOW (COLLEGATE AI BOTTONI) ---
+
     window.startPoll = async () => {
         const p = document.getElementById('poll-players').value;
-        if(!p) return;
+        if(!p) return alert("Inserisci il numero di giocatori!");
         await addDoc(collection(db, "polls"), { 
             players: parseInt(p), 
             status: "active", 
@@ -163,38 +165,21 @@
         await updateDoc(doc(db, "utenti", uid), { validato: true });
     };
 
-    // NUOVA LOGICA: Scarica i voti solo per il sondaggio selezionato
     window.showVotes = async (pollId) => {
         const detail = document.getElementById('votes-detail');
         const list = document.getElementById('votes-list');
         detail.style.display = 'block';
-        list.innerHTML = "<i>Caricamento voti...</i>";
-        
-        try {
-            // Accediamo alla sottocollezione specifica
-            const votiSnap = await getDocs(collection(db, "polls", pollId, "votes"));
-            
-            if (votiSnap.empty) {
-                list.innerHTML = "Nessun voto registrato per questo sondaggio.";
-                return;
-            }
-
-            list.innerHTML = votiSnap.docs.map(d => {
-                const v = d.data();
-                return `<p style="border-bottom: 1px solid #f0f0f0; padding: 5px 0;">
-                            👤 <b>${v.username}</b>: <span style="color:var(--accent)">${v.game}</span>
-                        </p>`;
-            }).join('');
-        } catch (e) {
-            console.error(e);
-            list.innerHTML = "Errore nel caricamento voti.";
-        }
+        list.innerHTML = "<i>Caricamento...</i>";
+        const votiSnap = await getDocs(collection(db, "polls", pollId, "votes"));
+        list.innerHTML = votiSnap.empty ? "Nessun voto." : votiSnap.docs.map(d => `<p>👤 <b>${d.data().username}</b>: ${d.data().game}</p>`).join('');
     };
 
+    // Corretto: ora legge il file dall'input "xml-input"
     window.importBGG = async () => {
-        const file = document.getElementById('xml-input').files[0];
-        if(!file) return alert("Seleziona un file XML!");
-        
+        const fileInput = document.getElementById('xml-input');
+        const file = fileInput.files[0];
+        if (!file) return alert("Seleziona prima un file XML!");
+
         const text = await file.text();
         const parser = new DOMParser();
         const xml = parser.parseFromString(text, "text/xml");
@@ -202,23 +187,35 @@
         let aggiunti = 0;
 
         for (let item of items) {
-            const bggId = item.getAttribute("objectid");
-            const docRef = doc(db, "giochi", bggId);
-            const snap = await getDoc(docRef);
-
-            if (!snap.exists()) {
-                await setDoc(docRef, {
-                    name: item.getElementsByTagName("name")[0].textContent,
-                    thumb: item.getElementsByTagName("thumbnail")[0]?.textContent || "",
-                    minP: parseInt(item.getElementsByTagName("stats")[0]?.getAttribute("minplayers")),
-                    maxP: parseInt(item.getElementsByTagName("stats")[0]?.getAttribute("maxplayers")),
-                    time: parseInt(item.getElementsByTagName("stats")[0]?.getAttribute("playingtime")),
-                    type: "Boardgame"
+            const name = item.getElementsByTagName("name")[0]?.textContent;
+            const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent;
+            const stats = item.getElementsByTagName("stats")[0];
+            
+            try {
+                await addDoc(collection(db, "giochi"), {
+                    name: name,
+                    thumb: thumb || "",
+                    minP: parseInt(stats?.getAttribute("minplayers")) || 1,
+                    maxP: parseInt(stats?.getAttribute("maxplayers")) || 1,
+                    time: parseInt(stats?.getAttribute("playingtime")) || 30,
+                    addedAt: serverTimestamp()
                 });
                 aggiunti++;
-            }
+            } catch (e) { console.error(e); }
         }
-        alert("Importazione completata! Nuovi giochi: " + aggiunti);
+        alert("Importati " + aggiunti + " giochi!");
+    };
+
+    window.manualAdd = async () => {
+        const name = document.getElementById('g-name').value;
+        if(!name) return;
+        await addDoc(collection(db, "giochi"), { 
+            name: name, 
+            minP: 1, maxP: 99, time: 60, thumb: "", 
+            addedAt: serverTimestamp() 
+        });
+        document.getElementById('g-name').value = "";
+        alert("Gioco aggiunto!");
     };
 
     window.logout = () => signOut(auth);
