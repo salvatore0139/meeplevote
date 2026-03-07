@@ -3,201 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogo - Salvatore </title>
+    <title>Catalogo Giochi - Salvatore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --orange: #e67e22; --blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
-        nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
-        nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; cursor: pointer; }
-        header { background-color: var(--primary); color: white; padding: 2rem 1rem; text-align: center; }
+        :root {
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --bg: #ecf0f1;
+            --text: #333;
+            --gold: #f1c40f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--text);
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            display: flex;
+            max-width: 1400px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 0 15px;
+        }
+
+        /* SIDEBAR */
+        aside {
+            width: 280px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        aside h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+        .filter-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9em; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+
+        #btn-filtra {
+            width: 100%; background: var(--accent); color: white; border: none; padding: 12px;
+            border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px;
+        }
+        #btn-filtra:hover { background: #219150; }
+
+        .quick-link-list {
+            margin-top: 20px; max-height: 300px; overflow-y: auto; font-size: 0.85em;
+            border-top: 1px solid #eee; padding-top: 10px;
+        }
+        .quick-link-list a { text-decoration: none; color: #555; display: block; padding: 6px 0; border-bottom: 1px solid #f9f9f9; }
+
+        /* GRIGLIA GIOCHI */
+        main { flex-grow: 1; }
+        #game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .game-card {
+            background: white; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .game-card:hover { transform: translateY(-5px); }
         
-        .container { max-width: 1400px; margin: 20px auto; padding: 0 15px; }
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .game-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .game-card img { width: 100%; height: 160px; object-fit: cover; }
-        .game-card-content { padding: 15px; text-align: center; }
+        /* Badge Voto */
+        .voto-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(0,0,0,0.7); color: var(--gold);
+            padding: 4px 8px; border-radius: 6px; font-weight: bold;
+            font-size: 0.9em; display: flex; align-items: center; gap: 4px;
+        }
+
+        .game-card img { width: 100%; height: 200px; object-fit: cover; background: #f0f0f0; }
+        .game-card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .game-card h4 { margin: 0 0 10px 0; font-size: 1.1em; color: var(--primary); min-height: 2.4em; }
         
-        /* STILI PER IL POP-UP (MODALE) */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); position: relative; }
-        .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.2em; font-weight: bold; color: #888; }
-        .modal-box input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
-        .btn-accent { background: var(--accent); }
-        .btn-blue { background: var(--blue); }
-        .toggle-link { display: block; text-align: center; font-size: 0.8em; margin-top: 15px; color: var(--blue); cursor: pointer; }
+        .info { font-size: 0.85em; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+        .info i { color: var(--accent); width: 16px; text-align: center; }
+
+        .tag-container { margin: 12px 0; display: flex; flex-wrap: wrap; gap: 5px; }
+        .tag { 
+            display: inline-block; background: #f0f2f5; padding: 3px 10px; 
+            border-radius: 15px; font-size: 0.75em; font-weight: 600; color: #555;
+        }
+
+        .btn-rules {
+            margin-top: auto; display: block; text-align: center;
+            padding: 10px; background: #3498db; color: white;
+            text-decoration: none; border-radius: 6px; font-size: 0.85em; font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            aside { width: 100%; position: static; }
+        }
     </style>
 </head>
 <body>
 
-<nav>
-    <div style="font-weight: bold;">🎲 Salvatore Games</div>
-    <div>
-        <a href="index.html" style="color:var(--orange)">Catalogo</a> 
-        <a onclick="navigate('sondaggi.html')">Vota</a> 
-        <a onclick="navigate('admin.html')">Admin</a>
-        <a id="nav-logout" onclick="logout()" style="display:none; color: #e74c3c;">Esci</a>
-    </div>
+<nav style="background: var(--primary); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; color: white;">
+    <div style="font-weight: bold; font-size: 1.3em;"><i class="fas fa-dice-d20"></i> SALVATORE COLLECTION</div>
+    <div id="nav-links">
+        <a href="index.html" style="color: white; text-decoration: none; margin-right: 25px;">Sondaggio</a>
+        <a href="catalogo.html" style="color: var(--accent); text-decoration: none; font-weight: bold; margin-right: 25px;">Catalogo</a>
+        </div>
 </nav>
 
 <header>
-    <h1>Benvenuto nel Catalogo Giochi</h1>
-    <p>Sfoglia i giochi, accedi e partecipa ai sondaggi per le serate!</p>
+    <h1>📚 La Mia Libreria di Giochi</h1>
+    <p>Esplora, filtra e scopri cosa intavolare stasera</p>
 </header>
 
 <div class="container">
-    <div id="loading" style="text-align:center; padding: 20px;">Caricamento giochi da Firebase... ⏳</div>
-    <div id="game-grid" class="game-grid"></div>
-</div>
-
-<div id="auth-modal" class="modal-overlay">
-    <div class="modal-box">
-        <span class="close-btn" onclick="closeModal()">×</span>
+    <aside>
+        <h3>🔍 Filtri Rapidi</h3>
         
-        <div id="login-section">
-            <h3 style="margin-top:0;">🔐 Accedi</h3>
-            <input type="email" id="login-email" placeholder="Email">
-            <input type="password" id="login-pass" placeholder="Password (min. 6 caratteri)">
-            <button class="btn btn-accent" onclick="doLogin()">ACCEDI</button>
-            <span class="toggle-link" onclick="toggleMode('register')">Non hai un account? Registrati</span>
+        <div class="filter-group">
+            <label><i class="fas fa-users"></i> Quanti siete?</label>
+            <input type="number" id="f-players" min="1" max="20" placeholder="Es: 4">
         </div>
 
-        <div id="register-section" style="display:none;">
-            <h3 style="margin-top:0;">📝 Registrati</h3>
-            <input type="text" id="reg-user" placeholder="Nome o Username">
-            <input type="email" id="reg-email" placeholder="Email">
-            <input type="password" id="reg-pass" placeholder="Password (min. 6 caratteri)">
-            <button class="btn btn-blue" onclick="doRegister()">REGISTRATI</button>
-            <span class="toggle-link" onclick="toggleMode('login')">Hai già un account? Accedi</span>
+        <div class="filter-group">
+            <label><i class="fas fa-clock"></i> Tempo Max (min)</label>
+            <input type="number" id="f-time" placeholder="Es: 60">
         </div>
-    </div>
+
+        <div class="filter-group">
+            <label><i class="fas fa-layer-group"></i> Categoria</label>
+            <select id="f-type">
+                <option value="all">Tutte le categorie</option>
+                <option value="Strategia">Strategia</option>
+                <option value="Famiglie">Per Famiglie</option>
+                <option value="Party Game">Party Game</option>
+                <option value="Tematico">Tematico</option>
+                <option value="Astratto">Astratto</option>
+            </select>
+        </div>
+
+        <button id="btn-filtra">APPLICA FILTRI</button>
+
+        <div class="quick-link-list" id="quick-links">
+            <strong>📚 Elenco Rapido:</strong>
+        </div>
+    </aside>
+
+    <main>
+        <div id="game-grid">
+            </div>
+    </main>
 </div>
 
 <script type="module">
-    // 1. Importa PRIMA i tuoi oggetti dal file locale
     import { db, auth } from "./firebase.js";
+    import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // 2. Importa le funzioni di Firebase (usa gli URL completi)
-    import { 
-        collection, 
-        getDocs, 
-        doc, 
-        setDoc 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    
-    import { 
-        onAuthStateChanged, 
-        signInWithEmailAndPassword, 
-        createUserWithEmailAndPassword, 
-        signOut 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    let TUTTI_I_GIOCHI = [];
+    const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
 
-    // Variabili di stato
-    let currentUser = null;
-    let targetPage = null;
-
-    // --- FUNZIONI DI NAVIGAZIONE ---
-    window.navigate = (page) => {
-        if (currentUser) {
-            window.location.href = page;
-        } else {
-            targetPage = page;
-            document.getElementById('auth-modal').style.display = 'flex';
-        }
-    };
-
-    window.closeModal = () => {
-        document.getElementById('auth-modal').style.display = 'none';
-        targetPage = null;
-    };
-
-    window.toggleMode = (mode) => {
-        document.getElementById('login-section').style.display = mode === 'login' ? 'block' : 'none';
-        document.getElementById('register-section').style.display = mode === 'register' ? 'block' : 'none';
-    };
-
-    // --- LOGICA AUTENTICAZIONE ---
+    // 1. Controllo Admin e Navigazione
     onAuthStateChanged(auth, (user) => {
-        currentUser = user;
-        document.getElementById('nav-logout').style.display = user ? 'inline' : 'none';
-        if (user && targetPage) {
-            window.location.href = targetPage;
+        if (user && user.email === ADMIN_EMAIL) {
+            const adminLink = document.createElement('a');
+            adminLink.href = "admin.html";
+            adminLink.style.cssText = "color: #bdc3c7; text-decoration: none; font-size: 0.9em; border: 1px solid #bdc3c7; padding: 4px 10px; border-radius: 5px;";
+            adminLink.innerHTML = '<i class="fas fa-user-shield"></i> Admin';
+            document.getElementById('nav-links').appendChild(adminLink);
         }
     });
 
-    window.doLogin = async () => {
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, pass);
-            closeModal();
-        } catch (e) {
-            alert("❌ Errore: " + e.message);
-        }
-    };
-
-    window.doRegister = async () => {
-        const username = document.getElementById('reg-user').value;
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-pass').value;
-
-        if (!username || !email || !pass) return alert("⚠️ Compila tutto!");
+    // 2. Caricamento Real-time da Firebase
+    const q = query(collection(db, "giochi"), orderBy("name", "asc"));
+    
+    onSnapshot(q, (snapshot) => {
+        TUTTI_I_GIOCHI = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
         
-        try {
-            // Qui usiamo l'oggetto 'db' importato da firebase.js
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            
-            // Creazione documento utente
-            await setDoc(doc(db, "utenti", res.user.uid), {
-                username: username,
-                email: email,
-                validato: false
-            });
-            
-            alert("✅ Registrazione riuscita!");
-            closeModal();
-        } catch (e) {
-            alert("❌ Errore durante la registrazione: " + e.message);
-            console.error(e);
-        }
+        console.log("Dati caricati:", TUTTI_I_GIOCHI.length);
+        applicaFiltri(); 
+    });
+
+    // 3. Logica Filtri
+    window.applicaFiltri = () => {
+        const players = document.getElementById('f-players').value;
+        const time = document.getElementById('f-time').value;
+        const type = document.getElementById('f-type').value;
+
+        const filtrati = TUTTI_I_GIOCHI.filter(g => {
+            const okPlayers = !players || (players >= g.minP && players <= g.maxP);
+            const okTime = !time || (g.time <= time);
+            const okType = (type === "all") || (g.type && g.type.includes(type));
+            return okPlayers && okTime && okType;
+        });
+
+        renderizza(filtrati);
     };
 
-    window.logout = () => signOut(auth);
+    document.getElementById('btn-filtra').onclick = applicaFiltri;
 
-    // --- CARICAMENTO GIOCHI ---
-    async function loadGames() {
+    // 4. Renderizzazione Grafica
+    function renderizza(lista) {
         const grid = document.getElementById('game-grid');
-        const loading = document.getElementById('loading');
+        const quickLinks = document.getElementById('quick-links');
         
-        try {
-            // Controllo se db è definito
-            if (!db) throw new Error("Database non inizializzato correttamente in firebase.js");
+        grid.innerHTML = "";
+        quickLinks.innerHTML = "<strong>📚 Elenco Rapido:</strong>";
 
-            const snap = await getDocs(collection(db, "giochi"));
-            if (!snap || snap.empty) {
-                loading.innerHTML = "📭 Catalogo vuoto. Accedi come admin per popolarlo.";
-                return;
-            }
-
-            loading.style.display = 'none';
-            grid.innerHTML = snap.docs.map(d => {
-                const g = d.data();
-                return `
-                    <div class="game-card">
-                        <img src="${g.thumb || 'https://via.placeholder.com/300x200?text=No+Image'}">
-                        <div class="game-card-content">
-                            <h4>${g.name}</h4>
-                            <p>${g.minP}-${g.maxP} Giocatori</p>
-                        </div>
-                    </div>`;
-            }).join('');
-        } catch (e) {
-            console.error(e);
-            loading.innerHTML = "Pronto per il login.";
+        if (lista.length === 0) {
+            grid.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 40px;'>Nessun gioco trovato con questi filtri. 🎲</div>";
+            return;
         }
-    }
 
-    loadGames();
+        lista.forEach(g => {
+            // Card Griglia
+            const card = document.createElement('div');
+            card.className = 'game-card';
+            
+            // Gestione voto (se N.D. non mostriamo la stella)
+            const votoHtml = g.voto && g.voto !== "N.D." ? 
+                `<div class="voto-badge"><i class="fas fa-star"></i> ${g.voto}</div>` : '';
+
+            card.innerHTML = `
+                ${votoHtml}
+                <img src="${g.thumb || 'https://via.placeholder.com/240x200?text=No+Image'}" alt="${g.name}">
+                <div class="game-card-content">
+                    <h4>${g.name}</h4>
+                    <div class="info"><i class="fas fa-users"></i> ${g.minP}-${g.maxP} Giocatori</div>
+                    <div class="info"><i class="fas fa-hourglass-half"></i> ${g.time} Minuti</div>
+                    
+                    <div class="tag-container">
+                        <span class="tag">${g.type || 'Board Game'}</span>
+                        ${g.difficulty ? `<span class="tag" style="background:#d5f5e3; color:#1b5e20;">${g.difficulty}</span>` : ''}
+                    </div>
+                    
+                    <a href="${g.link || '#'}" target="_blank" class="btn-rules">
+                        <i class="fas fa-external-link-alt"></i> DETTAGLI BGG
+                    </a>
+                </div>
+            `;
+            grid.appendChild(card);
+
+            // Link Sidebar
+            const sLink = document.createElement('a');
+            sLink.href = g.link || '#';
+            sLink.target = "_blank";
+            sLink.innerText = `• ${g.name}`;
+            quickLinks.appendChild(sLink);
+        });
+    }
 </script>
+
 </body>
 </html>
