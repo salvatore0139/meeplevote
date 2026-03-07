@@ -3,229 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vota Sondaggio - Salvatore</title>
+    <title>Sondaggio Games - Salvatore</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --orange: #e67e22; --danger: #e74c3c; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --orange: #e67e22; --danger: #e74c3c; --blue: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
-        nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
-        nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
-        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
+        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
         .container { display: flex; max-width: 1400px; margin: 20px auto; gap: 20px; padding: 0 15px; }
-        aside { width: 300px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
+        
+        /* Sidebars */
+        aside { width: 280px; flex-shrink: 0; }
+        .card-aside { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
         main { flex-grow: 1; }
-        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .game-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        .game-card img { width: 100%; height: 140px; object-fit: cover; }
-        .game-card-content { padding: 12px; flex-grow: 1; text-align: center; }
-        .btn-vota { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .btn-vota:disabled { background: #bdc3c7; }
-        .btn-danger { background: var(--danger); width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        @media (max-width: 1024px) { .container { flex-direction: column; } aside { width: 100% !important; position: static; } }
+        
+        /* Grid */
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .game-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; transition: 0.3s; border: 3px solid transparent; }
+        .game-card.highlight { border-color: var(--orange); transform: scale(1.02); box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4); }
+        .game-card img { width: 100%; height: 150px; object-fit: cover; }
+        .game-card-content { padding: 15px; flex-grow: 1; text-align: center; }
+        .game-card h4 { margin: 0 0 10px 0; font-size: 1.1em; color: var(--primary); }
+        
+        /* Buttons */
+        .btn-vota { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-vota:hover { opacity: 0.9; }
+        .btn-vota:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-danger { background: var(--danger); width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+        /* Form */
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        label { font-size: 0.85em; font-weight: bold; color: #666; display: block; margin-bottom: 5px; }
+
+        /* Utility */
+        .rank-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .user-tag { background: #f1f1f1; padding: 5px 10px; border-radius: 20px; font-size: 0.85em; cursor: pointer; display: inline-block; margin: 3px; transition: 0.2s; border: 1px solid transparent; }
+        .user-tag:hover { border-color: var(--orange); background: #fff; }
+        .user-tag.active { background: var(--orange); color: white; }
+
+        @media (max-width: 1024px) { .container { flex-direction: column; } aside { width: 100%; } }
     </style>
 </head>
 <body>
 
 <script type="module" src="ui-manager.js"></script>
 
-<header><h1>🔥 Partecipa al Sondaggio</h1></header>
+<header><h1>🔥 Sondaggio Serata Games</h1></header>
 
 <div class="container">
     <aside>
-        <div id="auth-box">
-            <h3>🔐 Accedi per votare</h3>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="pass" placeholder="Password">
-            <button class="btn-vota" onclick="handleLogin()">ACCEDI</button>
-            <p style="font-size:0.7em; text-align:center; margin-top:10px;">Non hai un account? <a href="#" onclick="toggleAuth()">Registrati</a></p>
+        <div class="card-aside">
+            <h3>🔍 Filtri</h3>
+            <label>Categoria</label>
+            <select id="f-type"><option value="all">Tutte</option></select>
+            
+            <label>Tempo Massimo (min)</label>
+            <input type="number" id="f-time" placeholder="Es. 60">
         </div>
 
-        <div id="reg-box" style="display:none;">
-            <h3>📝 Registrazione</h3>
-            <input type="text" id="reg-user" placeholder="Nome/Username">
-            <input type="email" id="reg-email" placeholder="Email">
-            <input type="password" id="reg-pass" placeholder="Password">
-            <button class="btn-vota" style="background:var(--blue)" onclick="handleSignup()">REGISTRATI</button>
-            <p style="font-size:0.7em; text-align:center; margin-top:10px;"><a href="#" onclick="toggleAuth()">Torna al Login</a></p>
+        <div class="card-aside" id="participants-box">
+            <h3>👥 Chi ha votato?</h3>
+            <div id="user-list">Accedi per vedere...</div>
+            <p style="font-size: 0.7em; color: #888; margin-top: 10px;">Clicca su un nome per vedere i suoi voti</p>
         </div>
-
-        <div id="user-info" style="display:none;">
-            <h3>👤 Profilo</h3>
-            <p id="user-display"></p>
-            <div id="status-validation" style="font-size:0.8em; margin-bottom:10px;"></div>
-            <button onclick="logout()" style="border:none; background:none; color:red; cursor:pointer;">Esci</button>
-        </div>
-        <hr>
-        <h3>📊 Classifica</h3>
-        <div id="classifica-voti">Nessun sondaggio attivo.</div>
     </aside>
 
     <main>
-        <div id="status-sondaggio" style="margin-bottom: 15px; font-weight: bold;"></div>
+        <div id="status-sondaggio" style="margin-bottom: 15px; font-size: 1.2em; font-weight: bold; color: var(--primary);"></div>
         <div id="game-grid" class="game-grid"></div>
     </main>
+
+    <aside>
+        <div class="card-aside">
+            <h3>📊 Classifica</h3>
+            <div id="classifica-voti">Caricamento...</div>
+        </div>
+    </aside>
 </div>
 
 <script type="module">
     import { db, auth } from "./firebase.js";
-    // Importiamo le funzioni necessarie di Firestore e Auth
-    import { collection, doc, getDoc, setDoc, onSnapshot, query, where, addDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { collection, doc, getDoc, onSnapshot, query, where, addDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     let currentUser = null;
     let userDoc = null;
     let activePoll = null;
     let allGames = [];
     let currentVotes = [];
-    let unsubscribeVotes = null; // Variabile per tracciare il listener della sottocollezione
+    let selectedUserHighlight = null;
+    let unsubscribeVotes = null;
 
-    // Listener Autenticazione
+    // --- Inizializzazione Listener ---
+    
     onAuthStateChanged(auth, async (user) => {
-        const aBox = document.getElementById('auth-box');
-        const rBox = document.getElementById('reg-box');
-        const uBox = document.getElementById('user-info');
-        
         if (user) {
             currentUser = user;
             const d = await getDoc(doc(db, "utenti", user.uid));
             userDoc = d.data();
-            aBox.style.display = rBox.style.display = 'none';
-            uBox.style.display = 'block';
-            document.getElementById('user-display').innerHTML = `Ciao, <b>${userDoc.username}</b>`;
-            document.getElementById('status-validation').innerHTML = userDoc.validato ? "✅ Account Verificato" : "⏳ In attesa di verifica admin";
         } else {
             currentUser = null;
             userDoc = null;
-            aBox.style.display = 'block';
-            uBox.style.display = 'none';
         }
         renderUI();
     });
 
-    // Listener Database: Tutti i giochi
     onSnapshot(collection(db, "giochi"), (snap) => {
         allGames = snap.docs.map(d => d.data());
+        popolaCategorie();
         renderUI();
     });
 
-    // Listener Database: Sondaggio Attivo
     onSnapshot(query(collection(db, "polls"), where("status", "==", "active")), (snap) => {
         if (!snap.empty) {
             activePoll = {id: snap.docs[0].id, ...snap.docs[0].data()};
-            
-            // Gestione della sottocollezione "voti": accendiamo l'ascolto SOLO per questo sondaggio
-            if (unsubscribeVotes) unsubscribeVotes(); // Spegne l'ascolto precedente (se esiste)
-            
+            if (unsubscribeVotes) unsubscribeVotes();
             unsubscribeVotes = onSnapshot(collection(db, "polls", activePoll.id, "votes"), (vSnap) => {
                 currentVotes = vSnap.docs.map(d => ({id: d.id, ...d.data()}));
                 renderUI();
                 updateRanking();
+                updateParticipants();
             });
-
         } else {
-            // Nessun sondaggio attivo
             activePoll = null;
             currentVotes = [];
-            if (unsubscribeVotes) {
-                unsubscribeVotes(); // Spegniamo l'ascolto dei voti
-                unsubscribeVotes = null;
-            }
             renderUI();
             updateRanking();
         }
     });
 
+    // --- Logica UI ---
+
+    function popolaCategorie() {
+        const select = document.getElementById('f-type');
+        const types = [...new Set(allGames.map(g => g.type))].sort();
+        if (select.children.length > 1) return;
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t; opt.textContent = t;
+            select.appendChild(opt);
+        });
+    }
+
     function renderUI() {
         const grid = document.getElementById('game-grid');
         const status = document.getElementById('status-sondaggio');
-        
+        const fType = document.getElementById('f-type').value;
+        const fTime = document.getElementById('f-time').value;
+
         if (!activePoll) {
             status.innerHTML = "😴 Nessun sondaggio attivo.";
             grid.innerHTML = "";
             return;
         }
 
-        status.innerHTML = `🔥 Sondaggio attivo per ${activePoll.players} giocatori!`;
-        const filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
+        status.innerHTML = `✅ Sondaggio per ${activePoll.players} Giocatori`;
         
-        // Ora currentVotes contiene GIA' solo i voti del sondaggio attivo, basta controllare l'utente
-        const mioVoto = currentVotes.find(v => v.userId === currentUser?.uid);
+        let filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
+        if (fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
+        if (fTime) filtrati = filtrati.filter(g => g.time <= parseInt(fTime));
 
-        grid.innerHTML = filtrati.map(g => {
-            const isQuestoVoto = mioVoto && mioVoto.game === g.name;
-            return `
-                <div class="game-card">
-                    <img src="${g.thumb}">
-                    <div class="game-card-content">
-                        <h4>${g.name}</h4>
-                        ${isQuestoVoto ? 
-                            `<button class="btn-danger" onclick="annullaVoto('${mioVoto.id}')">ANNULLA VOTO</button>` : 
-                            `<button class="btn-vota" ${!userDoc?.validato || mioVoto ? 'disabled' : ''} onclick="vota('${g.name}')">
-                                ${!currentUser ? 'ACCEDI' : (!userDoc?.validato ? 'ATTENDI OK' : (mioVoto ? 'GIÀ VOTATO' : 'VOTA'))}
-                            </button>`
-                        }
-                    </div>
-                </div>`;
-        }).join('');
+function renderUI() {
+    const grid = document.getElementById('game-grid');
+    const status = document.getElementById('status-sondaggio');
+    const fType = document.getElementById('f-type').value;
+    const fTime = document.getElementById('f-time').value;
+
+    if (!activePoll) {
+        status.innerHTML = "😴 Nessun sondaggio attivo.";
+        grid.innerHTML = "";
+        return;
+    }
+
+    status.innerHTML = `✅ Sondaggio per ${activePoll.players} Giocatori`;
+    
+    // Filtriamo i giochi in base al numero di giocatori del sondaggio + i filtri scelti dall'utente
+    let filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
+    if (fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
+    if (fTime) filtrati = filtrati.filter(g => g.time <= parseInt(fTime));
+
+    // QUI VA IL BLOCCO CHE HAI SCRITTO TU:
+    grid.innerHTML = filtrati.map(g => {
+        // 1. Cerchiamo se l'utente loggato ha votato questo specifico gioco
+        const mioVotoPerQuestoGioco = currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
+        
+        // 2. Controllo permessi (Validato o Admin)
+        const canVote = currentUser && (userDoc?.validato || currentUser.email === "salvatoredidato01@gmail.com");
+
+        // Calcoliamo se il gioco deve essere evidenziato perché votato dall'utente cliccato nella sidebar
+        const isHighlighted = selectedUserHighlight && currentVotes.some(v => v.userId === selectedUserHighlight && v.game === g.name);
+
+        return `
+            <div class="game-card ${isHighlighted ? 'highlight' : ''}">
+                <img src="${g.thumb}">
+                <div class="game-card-content">
+                    <h4>${g.name}</h4>
+                    <p style="font-size:0.75em; color:#777;">${g.type} | ${g.time} min</p>
+                    
+                    ${mioVotoPerQuestoGioco ? 
+                        // SE HO GIÀ VOTATO: Mostra il tasto rosso per cancellare
+                        `<button class="btn-danger" onclick="annullaVoto('${mioVotoPerQuestoGioco.id}')">
+                            ❌ ANNULLA MIO VOTO
+                        </button>` :
+                        // SE NON HO VOTATO: Mostra il tasto verde (se ho i permessi)
+                        `<button class="btn-vota" ${!canVote ? 'disabled' : ''} onclick="vota('${g.name.replace(/'/g, "\\'")}')">
+                            ${!currentUser ? 'ACCEDI PER VOTARE' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
+                        </button>`
+                    }
+                </div>
+            </div>`;
+    }).join('');
+}
     }
 
     function updateRanking() {
-        if(!activePoll) {
-            document.getElementById('classifica-voti').innerHTML = "Nessun sondaggio attivo.";
-            return;
-        }
         const counts = {};
-        // Dato che abbiamo usato la subcollection, currentVotes ha solo i voti pertinenti a questo sondaggio
         currentVotes.forEach(v => counts[v.game] = (counts[v.game] || 0) + 1);
         const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
         
         document.getElementById('classifica-voti').innerHTML = sorted.map(([g, v]) => `
-            <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
+            <div class="rank-item">
                 <span>${g}</span> <b style="color:var(--orange)">${v}</b>
-            </div>`).join('') || "Ancora nessun voto.";
+            </div>`).join('') || "Nessun voto.";
     }
 
-    window.handleLogin = () => {
-        signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value)
-            .catch(e => alert("Errore: " + e.message));
-    };
+    function updateParticipants() {
+        const users = {};
+        currentVotes.forEach(v => {
+            users[v.userId] = v.username;
+        });
 
-    window.handleSignup = async () => {
-        const user = document.getElementById('reg-user').value;
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-pass').value;
-        if(!user) return alert("Inserisci un nome!");
-        
-        try {
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            await setDoc(doc(db, "utenti", res.user.uid), { username: user, email: email, validato: false });
-        } catch(e) { alert(e.message); }
+        const container = document.getElementById('user-list');
+        container.innerHTML = Object.entries(users).map(([id, name]) => `
+            <span class="user-tag ${selectedUserHighlight === id ? 'active' : ''}" onclick="toggleHighlight('${id}')">
+                ${name}
+            </span>
+        `).join('') || "Nessun partecipante.";
+    }
+
+    // --- Funzioni Globali ---
+
+    window.toggleHighlight = (userId) => {
+        selectedUserHighlight = (selectedUserHighlight === userId) ? null : userId;
+        renderUI();
+        updateParticipants();
     };
 
     window.vota = async (gameName) => {
-        // Scriviamo il voto nella SOTTOCOLLEZIONE corretta: polls -> ID -> votes
-        await addDoc(collection(db, "polls", activePoll.id, "votes"), {
-            userId: currentUser.uid,
-            username: userDoc.username,
-            game: gameName,
-            timestamp: serverTimestamp()
-        });
+        if (!currentUser) return;
+        try {
+            await addDoc(collection(db, "polls", activePoll.id, "votes"), {
+                userId: currentUser.uid,
+                username: userDoc?.username || "Admin",
+                game: gameName,
+                timestamp: serverTimestamp()
+            });
+        } catch (e) { alert("Errore nel voto: " + e.message); }
     };
 
-    window.annullaVoto = async (id) => {
-        // Cancelliamo il voto dalla SOTTOCOLLEZIONE
-        if(confirm("Annullare il voto?")) {
-            await deleteDoc(doc(db, "polls", activePoll.id, "votes", id));
+window.annullaVoto = async (votoId) => {
+    if (!activePoll) return;
+    
+    // Chiediamo conferma per evitare click accidentali
+    if(confirm("Vuoi davvero rimuovere questo voto?")) {
+        try {
+            // Puntiamo al documento specifico dentro la sottocollezione 'votes'
+            await deleteDoc(doc(db, "polls", activePoll.id, "votes", votoId));
+            // Non serve ricaricare la pagina, onSnapshot aggiornerà la griglia da solo!
+        } catch (e) {
+            console.error("Errore cancellazione:", e);
+            alert("Errore: non hai i permessi per cancellare questo voto.");
         }
-    };
+    }
+};
 
-    window.logout = () => signOut(auth);
-    window.toggleAuth = () => {
-        const a = document.getElementById('auth-box');
-        const r = document.getElementById('reg-box');
-        a.style.display = a.style.display === 'none' ? 'block' : 'none';
-        r.style.display = r.style.display === 'none' ? 'block' : 'none';
-    };
+    // Eventi per i filtri
+    document.getElementById('f-type').addEventListener('change', renderUI);
+    document.getElementById('f-time').addEventListener('input', renderUI);
+
 </script>
 </body>
 </html>
