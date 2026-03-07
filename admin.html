@@ -19,7 +19,7 @@
 
         /* Modal */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 450px; border-radius: 12px; position: relative; }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 450px; border-radius: 12px; position: relative; max-height: 80vh; overflow-y: auto; }
         
         h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
         .card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
@@ -35,6 +35,12 @@
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
         .status-badge { padding: 4px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
         .status-active { background: #d4edda; color: #155724; }
+
+        /* Voti Sondaggi */
+        .vote-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .vote-game { font-weight: bold; color: var(--primary); flex: 1; }
+        .vote-count { background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin: 0 10px; }
+        .vote-names { font-size: 0.75em; color: #666; flex: 1; text-align: right; display:none; }
     </style>
 </head>
 <body>
@@ -57,6 +63,9 @@
 
         <h3 style="margin-top:30px;">👥 Convalida Utenti</h3>
         <div id="user-list">Caricamento utenti...</div>
+
+        <!-- Nuovo tasto per vedere voti -->
+        <button class="btn btn-blue" id="btn-show-votes" style="margin-top:20px;">📊 Mostra Voti Sondaggi</button>
     </aside>
 
     <main class="col-center">
@@ -86,6 +95,7 @@
     </main>
 </div>
 
+<!-- Modal Aggiungi Gioco -->
 <div id="gameModal" class="modal">
     <div class="modal-content">
         <h3>Nuovo Gioco a Catalogo</h3>
@@ -111,133 +121,177 @@
     </div>
 </div>
 
+<!-- Modal Voti -->
+<div id="votesModal" class="modal">
+    <div class="modal-content">
+        <h3>📊 Risultati Votazioni</h3>
+        <div id="votes-container">Caricamento voti...</div>
+        <button class="btn btn-danger" id="close-votes-btn" style="margin-top:15px;">Chiudi</button>
+    </div>
+</div>
+
 <script type="module">
-    import { db, auth } from "./firebase.js";
-    import { collection, doc, getDocs, addDoc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { db, auth } from "./firebase.js";
+import { collection, doc, getDocs, addDoc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
-    let polls = [];
+const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
+let polls = [];
 
-    // --- PROTEZIONE DASHBOARD ---
-    onAuthStateChanged(auth, (user) => {
-        if (user && user.email === ADMIN_EMAIL) {
-            document.body.style.display = 'block';
-            initAdmin();
-        } else {
-            window.location.href = "index.html";
-        }
+// --- PROTEZIONE DASHBOARD ---
+onAuthStateChanged(auth, (user) => {
+    if (user && user.email === ADMIN_EMAIL) {
+        document.body.style.display = 'block';
+        initAdmin();
+    } else {
+        window.location.href = "index.html";
+    }
+});
+
+// --- GESTIONE MODAL ---
+const modal = document.getElementById("gameModal");
+const votesModal = document.getElementById("votesModal");
+document.getElementById("open-modal-btn").onclick = () => modal.style.display = "block";
+document.getElementById("close-modal-btn").onclick = () => modal.style.display = "none";
+document.getElementById("close-votes-btn").onclick = () => votesModal.style.display = "none";
+
+function initAdmin() {
+    // Listener Storico Sondaggi
+    onSnapshot(query(collection(db, "polls"), orderBy("timestamp", "desc")), (snap) => {
+        polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        renderPolls();
     });
 
-    // --- GESTIONE MODAL ---
-    const modal = document.getElementById("gameModal");
-    document.getElementById("open-modal-btn").onclick = () => modal.style.display = "block";
-    document.getElementById("close-modal-btn").onclick = () => modal.style.display = "none";
+    // Listener Utenti
+    onSnapshot(collection(db, "utenti"), (snap) => {
+        const list = document.getElementById('user-list');
+        list.innerHTML = snap.docs.map(d => {
+            const u = d.data();
+            return `
+                <div class="card-inner" style="padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span>${u.username}</span>
+                    ${u.validato ? '✅' : `<button class="btn btn-accent btn-valida" data-id="${d.id}" style="width:auto; padding:5px 10px;">Valida</button>`}
+                </div>`;
+        }).join('');
+        document.querySelectorAll('.btn-valida').forEach(b => b.onclick = () => updateDoc(doc(db, "utenti", b.dataset.id), { validato: true }));
+    });
+}
 
-    function initAdmin() {
-        // Listener Storico Sondaggi
-        onSnapshot(query(collection(db, "polls"), orderBy("timestamp", "desc")), (snap) => {
-            polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderPolls();
-        });
+// --- RENDER SONDAGGI ---
+function renderPolls() {
+    const active = polls.find(p => p.status === "active");
+    document.getElementById('area-creazione').style.display = active ? 'none' : 'block';
+    document.getElementById('active-poll-info').style.display = active ? 'block' : 'none';
+    if(active) document.getElementById('active-p-text').textContent = active.players;
 
-        // Listener Utenti
-        onSnapshot(collection(db, "utenti"), (snap) => {
-            const list = document.getElementById('user-list');
-            list.innerHTML = snap.docs.map(d => {
-                const u = d.data();
-                return `
-                    <div class="card-inner" style="padding:10px; display:flex; justify-content:space-between; align-items:center;">
-                        <span>${u.username}</span>
-                        ${u.validato ? '✅' : `<button class="btn btn-accent btn-valida" data-id="${d.id}" style="width:auto; padding:5px 10px;">Valida</button>`}
-                    </div>`;
-            }).join('');
-            document.querySelectorAll('.btn-valida').forEach(b => b.onclick = () => updateDoc(doc(db, "utenti", b.dataset.id), { validato: true }));
-        });
-    }
+    const tbody = document.querySelector('#history-table tbody');
+    tbody.innerHTML = polls.map(p => `
+        <tr>
+            <td>${p.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td>
+            <td>${p.players}</td>
+            <td><span class="status-badge ${p.status === 'active' ? 'status-active' : ''}">${p.status.toUpperCase()}</span></td>
+            <td>${p.winner || '-'}</td>
+        </tr>
+    `).join('');
+}
 
-    function renderPolls() {
-        const active = polls.find(p => p.status === "active");
-        document.getElementById('area-creazione').style.display = active ? 'none' : 'block';
-        document.getElementById('active-poll-info').style.display = active ? 'block' : 'none';
-        if(active) document.getElementById('active-p-text').textContent = active.players;
+// --- GESTIONE SONDAGGI ---
+document.getElementById('btn-start-poll').onclick = async () => {
+    const p = document.getElementById('poll-players').value;
+    if(!p) return alert("Inserisci il numero di giocatori!");
+    await addDoc(collection(db, "polls"), { players: parseInt(p), status: "active", timestamp: serverTimestamp() });
+};
 
-        const tbody = document.querySelector('#history-table tbody');
-        tbody.innerHTML = polls.map(p => `
-            <tr>
-                <td>${p.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td>
-                <td>${p.players}</td>
-                <td><span class="status-badge ${p.status === 'active' ? 'status-active' : ''}">${p.status.toUpperCase()}</span></td>
-                <td>${p.winner || '-'}</td>
-            </tr>
-        `).join('');
-    }
+document.getElementById('btn-stop-poll').onclick = async () => {
+    const active = polls.find(p => p.status === "active");
+    if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
+};
 
-    // --- AZIONI SONDAGGIO ---
-    document.getElementById('btn-start-poll').onclick = async () => {
-        const p = document.getElementById('poll-players').value;
-        if(!p) return alert("Inserisci il numero di giocatori!");
-        await addDoc(collection(db, "polls"), { players: parseInt(p), status: "active", timestamp: serverTimestamp() });
-    };
-
-    document.getElementById('btn-stop-poll').onclick = async () => {
-        const active = polls.find(p => p.status === "active");
-        if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
-    };
-
-    // --- IMPORTAZIONE JSON ---
-    document.getElementById('btn-import-json').onclick = async () => {
-        const file = document.getElementById('json-input').files[0];
-        if(!file) return alert("Seleziona il file JSON!");
-
-        const data = JSON.parse(await file.text());
-        let aggiunti = 0, saltati = 0;
-
-        for(let g of data) {
-            // Se non c'è bggId lo prendiamo dal link
-            const currentBggId = g.bggId || g.link.split('/').pop();
-            const q = query(collection(db, "giochi"), where("bggId", "==", currentBggId));
-            const snap = await getDocs(q);
-
-            if(snap.empty) {
-                await addDoc(collection(db, "giochi"), {
-                    ...g,
-                    bggId: currentBggId,
-                    addedAt: serverTimestamp()
-                });
-                aggiunti++;
-            } else { saltati++; }
-        }
-        alert(`Operazione completata!\nNuovi: ${aggiunti}\nGià esistenti: ${saltati}`);
-    };
-
-    // --- SALVATAGGIO MANUALE ---
-    document.getElementById('btn-save-manual').onclick = async () => {
-        const bid = document.getElementById('m-bggId').value;
-        if(!bid) return alert("Inserisci almeno il BGG ID");
-
-        const q = query(collection(db, "giochi"), where("bggId", "==", bid));
+// --- IMPORTAZIONE JSON ---
+document.getElementById('btn-import-json').onclick = async () => {
+    const file = document.getElementById('json-input').files[0];
+    if(!file) return alert("Seleziona il file JSON!");
+    const data = JSON.parse(await file.text());
+    let aggiunti = 0, saltati = 0;
+    for(let g of data) {
+        const currentBggId = g.bggId || g.link.split('/').pop();
+        const q = query(collection(db, "giochi"), where("bggId", "==", currentBggId));
         const snap = await getDocs(q);
-        if(!snap.empty) return alert("Questo gioco è già nel database!");
+        if(snap.empty) {
+            await addDoc(collection(db, "giochi"), { ...g, bggId: currentBggId, addedAt: serverTimestamp() });
+            aggiunti++;
+        } else { saltati++; }
+    }
+    alert(`Operazione completata!\nNuovi: ${aggiunti}\nGià esistenti: ${saltati}`);
+};
 
-        await addDoc(collection(db, "giochi"), {
-            name: document.getElementById('m-name').value,
-            bggId: bid,
-            thumb: document.getElementById('m-thumb').value,
-            minP: parseInt(document.getElementById('m-minP').value) || 1,
-            maxP: parseInt(document.getElementById('m-maxP').value) || 1,
-            time: parseInt(document.getElementById('m-time').value) || 0,
-            type: document.getElementById('m-type').value,
-            voto: document.getElementById('m-voto').value,
-            difficulty: document.getElementById('m-difficulty').value,
-            link: `https://boardgamegeek.com/boardgame/${bid}`,
-            addedAt: serverTimestamp()
+// --- SALVATAGGIO MANUALE ---
+document.getElementById('btn-save-manual').onclick = async () => {
+    const bid = document.getElementById('m-bggId').value;
+    if(!bid) return alert("Inserisci almeno il BGG ID");
+    const q = query(collection(db, "giochi"), where("bggId", "==", bid));
+    const snap = await getDocs(q);
+    if(!snap.empty) return alert("Questo gioco è già nel database!");
+    await addDoc(collection(db, "giochi"), {
+        name: document.getElementById('m-name').value,
+        bggId: bid,
+        thumb: document.getElementById('m-thumb').value,
+        minP: parseInt(document.getElementById('m-minP').value) || 1,
+        maxP: parseInt(document.getElementById('m-maxP').value) || 1,
+        time: parseInt(document.getElementById('m-time').value) || 0,
+        type: document.getElementById('m-type').value,
+        voto: document.getElementById('m-voto').value,
+        difficulty: document.getElementById('m-difficulty').value,
+        link: `https://boardgamegeek.com/boardgame/${bid}`,
+        addedAt: serverTimestamp()
+    });
+    alert("Gioco aggiunto con successo!");
+    modal.style.display = "none";
+};
+
+// --- MOSTRA VOTI ---
+document.getElementById('btn-show-votes').onclick = async () => {
+    votesModal.style.display = "block";
+    const container = document.getElementById('votes-container');
+    container.innerHTML = "Caricamento in corso...";
+
+    try {
+        const allVotes = {};
+        for(let p of polls) {
+            const votesSnap = await getDocs(collection(db, `polls/${p.id}/votes`));
+            votesSnap.forEach(voteDoc => {
+                const v = voteDoc.data();
+                if(!allVotes[v.gameName]) allVotes[v.gameName] = [];
+                allVotes[v.gameName].push(v.userName || "Anonimo");
+            });
+        }
+
+        const sorted = Object.entries(allVotes).sort((a,b) => b[1].length - a[1].length);
+
+        if(sorted.length === 0) {
+            container.innerHTML = "<p>Nessun voto effettuato.</p>";
+            return;
+        }
+
+        container.innerHTML = sorted.map(([game, users]) => `
+            <div class="vote-row">
+                <span class="vote-game">${game}</span>
+                <span class="vote-count">${users.length}</span>
+                <span class="vote-names">${users.join(", ")}</span>
+            </div>
+        `).join('');
+
+        document.querySelectorAll('.vote-row').forEach(row => {
+            row.onclick = () => {
+                const names = row.querySelector('.vote-names');
+                names.style.display = names.style.display === 'none' ? 'block' : 'none';
+            };
         });
-        alert("Gioco aggiunto con successo!");
-        modal.style.display = "none";
-    };
-
-    document.getElementById('btn-logout').onclick = () => signOut(auth);
+    } catch(e) {
+        container.innerHTML = "Errore nel caricamento voti.";
+        console.error(e);
+    }
+};
 </script>
 </body>
 </html>
