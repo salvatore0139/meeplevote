@@ -74,38 +74,108 @@
 </div>
 
 <script type="module">
+    // 1. Importa PRIMA i tuoi oggetti dal file locale
     import { db, auth } from "./firebase.js";
-    import { collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    // 2. Importa le funzioni di Firebase (usa gli URL completi)
+    import { 
+        collection, 
+        getDocs, 
+        doc, 
+        setDoc 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    
+    import { 
+        onAuthStateChanged, 
+        signInWithEmailAndPassword, 
+        createUserWithEmailAndPassword, 
+        signOut 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    // Variabili di stato
     let currentUser = null;
-    let targetPage = null; // Salva la pagina dove l'utente voleva andare
+    let targetPage = null;
 
-    // 1. ASCOLTA L'AUTENTICAZIONE
+    // --- FUNZIONI DI NAVIGAZIONE ---
+    window.navigate = (page) => {
+        if (currentUser) {
+            window.location.href = page;
+        } else {
+            targetPage = page;
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+    };
+
+    window.closeModal = () => {
+        document.getElementById('auth-modal').style.display = 'none';
+        targetPage = null;
+    };
+
+    window.toggleMode = (mode) => {
+        document.getElementById('login-section').style.display = mode === 'login' ? 'block' : 'none';
+        document.getElementById('register-section').style.display = mode === 'register' ? 'block' : 'none';
+    };
+
+    // --- LOGICA AUTENTICAZIONE ---
     onAuthStateChanged(auth, (user) => {
         currentUser = user;
         document.getElementById('nav-logout').style.display = user ? 'inline' : 'none';
-        
-        if (user) {
-            closeModal();
-            // Se l'utente si è appena loggato e voleva andare in una pagina specifica, mandiamocelo
-            if(targetPage) {
-                window.location.href = targetPage;
-            }
+        if (user && targetPage) {
+            window.location.href = targetPage;
         }
     });
 
-    // 2. SCARICA I GIOCHI DA FIREBASE
+    window.doLogin = async () => {
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-pass').value;
+        try {
+            await signInWithEmailAndPassword(auth, email, pass);
+            closeModal();
+        } catch (e) {
+            alert("❌ Errore: " + e.message);
+        }
+    };
+
+    window.doRegister = async () => {
+        const username = document.getElementById('reg-user').value;
+        const email = document.getElementById('reg-email').value;
+        const pass = document.getElementById('reg-pass').value;
+
+        if (!username || !email || !pass) return alert("⚠️ Compila tutto!");
+        
+        try {
+            // Qui usiamo l'oggetto 'db' importato da firebase.js
+            const res = await createUserWithEmailAndPassword(auth, email, pass);
+            
+            // Creazione documento utente
+            await setDoc(doc(db, "utenti", res.user.uid), {
+                username: username,
+                email: email,
+                validato: false
+            });
+            
+            alert("✅ Registrazione riuscita!");
+            closeModal();
+        } catch (e) {
+            alert("❌ Errore durante la registrazione: " + e.message);
+            console.error(e);
+        }
+    };
+
+    window.logout = () => signOut(auth);
+
+    // --- CARICAMENTO GIOCHI ---
     async function loadGames() {
         const grid = document.getElementById('game-grid');
         const loading = document.getElementById('loading');
         
         try {
+            // Controllo se db è definito
+            if (!db) throw new Error("Database non inizializzato correttamente in firebase.js");
+
             const snap = await getDocs(collection(db, "giochi"));
-            
-            // Se la collezione non esiste o è vuota
             if (!snap || snap.empty) {
-                loading.innerHTML = "📭 Il catalogo è vuoto. Accedi come Admin per caricare i giochi!";
+                loading.innerHTML = "📭 Catalogo vuoto. Accedi come admin per popolarlo.";
                 return;
             }
 
@@ -116,84 +186,18 @@
                     <div class="game-card">
                         <img src="${g.thumb || 'https://via.placeholder.com/300x200?text=No+Image'}">
                         <div class="game-card-content">
-                            <h4 style="margin:0 0 10px 0;">${g.name}</h4>
-                            <div style="font-size: 0.85em; color: #666;">
-                                👥 ${g.minP} - ${g.maxP} Giocatori<br>
-                                ⏱️ ${g.time} min
-                            </div>
+                            <h4>${g.name}</h4>
+                            <p>${g.minP}-${g.maxP} Giocatori</p>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         } catch (e) {
-            console.error("Errore dettagliato:", e);
-            // Se l'errore è dovuto ai permessi o alla collezione mancante, 
-            // permettiamo comunque all'utente di vedere il messaggio per loggarsi
-            loading.innerHTML = "👋 Benvenuto! Accedi per gestire il catalogo.";
+            console.error(e);
+            loading.innerHTML = "Pronto per il login.";
         }
     }
 
-    loadGames(); // Avvia subito il caricamento
-
-    // 3. GESTIONE DELLA NAVIGAZIONE (Il "Muro" del Login)
-    window.navigate = (page) => {
-        if (currentUser) {
-            window.location.href = page; // Se sei loggato, vai tranquillo
-        } else {
-            targetPage = page; // Salva la destinazione
-            document.getElementById('auth-modal').style.display = 'flex'; // Mostra il pop-up
-        }
-    };
-
-    // 4. FUNZIONI DEL POP-UP
-    window.closeModal = () => {
-        document.getElementById('auth-modal').style.display = 'none';
-        targetPage = null; // Resetta la destinazione
-    };
-
-    window.toggleMode = (mode) => {
-        document.getElementById('login-section').style.display = mode === 'login' ? 'block' : 'none';
-        document.getElementById('register-section').style.display = mode === 'register' ? 'block' : 'none';
-    };
-
-    window.doLogin = async () => {
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, pass);
-        } catch (e) {
-            alert("❌ Errore di accesso: Controlla email e password.");
-            console.error(e);
-        }
-    };
-
-    window.doRegister = async () => {
-        const user = document.getElementById('reg-user').value;
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-pass').value;
-        
-        if (!user || !email || !pass) return alert("⚠️ Compila tutti i campi!");
-        if (pass.length < 6) return alert("⚠️ La password deve avere almeno 6 caratteri!");
-
-        try {
-            // Crea l'account in Firebase Auth
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            // Salva i dati extra nel database Firestore
-            await setDoc(doc(db, "utenti", res.user.uid), { 
-                username: user, 
-                email: email, 
-                validato: false 
-            });
-            alert("✅ Registrazione completata!");
-        } catch (e) {
-            // Se fallisce, Firebase ci dice il motivo (es. email già usata)
-            alert("❌ Errore durante la registrazione: " + e.message);
-            console.error(e);
-        }
-    };
-
-    window.logout = () => signOut(auth);
-
+    loadGames();
 </script>
 </body>
 </html>
