@@ -42,6 +42,33 @@
         .user-tag.active { background: var(--orange); color: white; }
 
         @media (max-width: 1024px) { .container { flex-direction: column; } aside { width: 100%; } }
+
+        /* Layout con scroll centrale */
+        main { 
+            flex-grow: 1; 
+            height: calc(100vh - 150px); /* Altezza fissa per permettere lo scroll */
+            overflow-y: auto; 
+            padding-right: 10px;
+        }
+        
+        /* Scrollbar personalizzata per renderla più bella */
+        main::-webkit-scrollbar { width: 8px; }
+        main::-webkit-scrollbar-track { background: #f1f1f1; }
+        main::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+        
+        /* Forza l'ordine degli elementi nella griglia */
+        .game-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 15px; 
+        }
+        
+        /* Quando un gioco è evidenziato, gli diamo un ordine di priorità tramite flex/grid order */
+        .game-card.highlight { 
+            order: -1; /* Lo sposta all'inizio della griglia */
+            border-color: var(--orange);
+            background-color: #fff9f4;
+        }     
     </style>
 </head>
 <body>
@@ -152,27 +179,31 @@
         const status = document.getElementById('status-sondaggio');
         const fType = document.getElementById('f-type').value;
         const fTime = document.getElementById('f-time').value;
-
+    
         if (!activePoll) {
             status.innerHTML = "😴 Nessun sondaggio attivo.";
             grid.innerHTML = "";
             return;
         }
-
+    
         status.innerHTML = `✅ Sondaggio per ${activePoll.players} Giocatori`;
         
-        // Filtro giochi
         let filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
         if (fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
         if (fTime) filtrati = filtrati.filter(g => g.time <= parseInt(fTime));
-
+    
         grid.innerHTML = filtrati.map(g => {
             const mioVotoPerQuestoGioco = currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
-            const canVote = currentUser && (userDoc?.validato || currentUser.email === "salvatoredidato01@gmail.com");
+            
+            // Controllo Admin: sia tramite ruolo nel doc che tramite email per sicurezza
+            const isAdminUser = userDoc?.role === 'admin' || currentUser?.email === "salvatoredidato01@gmail.com";
+            const canVote = currentUser && (userDoc?.validato || isAdminUser);
+    
+            // Controllo se questo gioco è tra quelli votati dall'utente cliccato nella sidebar
             const isHighlighted = selectedUserHighlight && currentVotes.some(v => v.userId === selectedUserHighlight && v.game === g.name);
-
+    
             return `
-                <div class="game-card ${isHighlighted ? 'highlight' : ''}">
+                <div class="game-card ${isHighlighted ? 'highlight' : ''}" style="${isHighlighted ? 'order: -1;' : 'order: 0;'}">
                     <img src="${g.thumb}">
                     <div class="game-card-content">
                         <h4>${g.name}</h4>
@@ -180,7 +211,7 @@
                         ${mioVotoPerQuestoGioco ? 
                             `<button class="btn-danger" onclick="annullaVoto('${mioVotoPerQuestoGioco.id}')">❌ ANNULLA MIO VOTO</button>` :
                             `<button class="btn-vota" ${!canVote ? 'disabled' : ''} onclick="vota('${g.name.replace(/'/g, "\\'")}')">
-                                ${!currentUser ? 'ACCEDI PER VOTARE' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
+                                ${!currentUser ? 'ACCEDI' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
                             </button>`
                         }
                     </div>
