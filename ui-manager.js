@@ -8,7 +8,7 @@ const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
 function injectUI() {
     const navHTML = `
     <nav class="universal-nav">
-        <div class="logo">🎲 Salvatore Games</div>
+        <div class="logo">🎲 Salvatore </div>
         <div class="nav-links">
             <a href="index.html">Catalogo</a>
             <a href="sondaggi.html">Sondaggi</a>
