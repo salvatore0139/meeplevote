@@ -99,7 +99,7 @@
     // RENDIAMO TUTTO DISPONIBILE GLOBALMENTE
     window.db = db;
     window.auth = auth;
-
+    console.log("Controllo Database:", window.db);
     const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; 
 
     onAuthStateChanged(auth, (user) => {
