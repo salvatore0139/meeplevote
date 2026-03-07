@@ -12,6 +12,7 @@
             --bg: #ecf0f1;
             --text: #333;
             --gold: #f1c40f;
+            --orange: #e67e22;
         }
 
         body {
@@ -19,98 +20,116 @@
             background-color: var(--bg);
             margin: 0;
             color: var(--text);
+            height: 100vh; /* Blocca l'altezza del body */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Impedisce lo scroll di tutta la pagina */
         }
 
         header {
             background-color: var(--primary);
             color: white;
-            padding: 1.5rem 2rem;
+            padding: 1rem 2rem;
             text-align: center;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
 
         .container {
             display: flex;
-            max-width: 1400px;
-            margin: 20px auto;
+            max-width: 1600px;
+            margin: 0 auto;
             gap: 20px;
-            padding: 0 15px;
+            padding: 20px;
+            flex-grow: 1;
+            overflow: hidden; /* Necessario per lo scroll interno */
         }
 
-        /* SIDEBAR */
+        /* SIDEBAR FISSA */
         aside {
-            width: 280px;
+            width: 300px;
             background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            height: fit-content;
-            position: sticky;
-            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto; /* Permette lo scroll se i filtri sono troppi */
         }
 
         aside h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
-        .filter-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.9em; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .filter-group { margin-bottom: 5px; }
+        label { display: block; font-size: 0.85em; margin-bottom: 5px; font-weight: bold; color: #666; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; background: #fff; }
 
         #btn-filtra {
-            width: 100%; background: var(--accent); color: white; border: none; padding: 12px;
-            border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px;
+            background: var(--accent); color: white; border: none; padding: 12px;
+            border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s;
         }
         #btn-filtra:hover { background: #219150; }
 
-        .quick-link-list {
-            margin-top: 20px; max-height: 300px; overflow-y: auto; font-size: 0.85em;
-            border-top: 1px solid #eee; padding-top: 10px;
+        /* MAIN SCROLLABILE */
+        main { 
+            flex-grow: 1; 
+            overflow-y: auto; /* QUI ATTIVIAMO LO SCROLL SOLO PER I GIOCHI */
+            padding-right: 10px;
         }
-        .quick-link-list a { text-decoration: none; color: #555; display: block; padding: 6px 0; border-bottom: 1px solid #f9f9f9; }
 
-        /* GRIGLIA GIOCHI */
-        main { flex-grow: 1; }
+        /* Scrollbar personalizzata */
+        main::-webkit-scrollbar { width: 8px; }
+        main::-webkit-scrollbar-track { background: #f1f1f1; }
+        main::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
         #game-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 20px;
+            padding-bottom: 50px;
         }
 
+        /* CARD GIOCHI */
         .game-card {
             background: white; border-radius: 12px; overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: 0.2s;
             display: flex; flex-direction: column; position: relative;
         }
-        .game-card:hover { transform: translateY(-5px); }
+        .game-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         
-        /* Badge Voto */
         .voto-badge {
             position: absolute; top: 10px; right: 10px;
-            background: rgba(0,0,0,0.7); color: var(--gold);
-            padding: 4px 8px; border-radius: 6px; font-weight: bold;
-            font-size: 0.9em; display: flex; align-items: center; gap: 4px;
+            background: rgba(0,0,0,0.8); color: var(--gold);
+            padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.85em;
         }
 
-        .game-card img { width: 100%; height: 200px; object-fit: cover; background: #f0f0f0; }
+        /* Badge Popolarità (Voti Sondaggi) */
+        .poll-badge {
+            position: absolute; top: 10px; left: 10px;
+            background: var(--orange); color: white;
+            padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75em;
+        }
+
+        .game-card img { width: 100%; height: 180px; object-fit: cover; background: #f0f0f0; }
         .game-card-content { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
-        .game-card h4 { margin: 0 0 10px 0; font-size: 1.1em; color: var(--primary); min-height: 2.4em; }
+        .game-card h4 { margin: 0 0 10px 0; font-size: 1.05em; color: var(--primary); line-height: 1.2; }
         
-        .info { font-size: 0.85em; color: #555; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
-        .info i { color: var(--accent); width: 16px; text-align: center; }
+        .info { font-size: 0.85em; color: #555; margin-bottom: 6px; }
+        .info i { color: var(--accent); margin-right: 5px; }
 
-        .tag-container { margin: 12px 0; display: flex; flex-wrap: wrap; gap: 5px; }
-        .tag { 
-            display: inline-block; background: #f0f2f5; padding: 3px 10px; 
-            border-radius: 15px; font-size: 0.75em; font-weight: 600; color: #555;
-        }
+        .tag-container { margin: 10px 0; display: flex; flex-wrap: wrap; gap: 5px; }
+        .tag { background: #f0f2f5; padding: 3px 8px; border-radius: 10px; font-size: 0.7em; font-weight: 600; }
 
         .btn-rules {
             margin-top: auto; display: block; text-align: center;
-            padding: 10px; background: #3498db; color: white;
-            text-decoration: none; border-radius: 6px; font-size: 0.85em; font-weight: bold;
+            padding: 10px; background: var(--primary); color: white;
+            text-decoration: none; border-radius: 6px; font-size: 0.8em; font-weight: bold;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
+            body { overflow: auto; height: auto; }
             .container { flex-direction: column; }
             aside { width: 100%; position: static; }
+            main { overflow: visible; }
         }
     </style>
 </head>
@@ -119,149 +138,146 @@
 <script type="module" src="ui-manager.js"></script>
 
 <header>
-    <h1>📚 La Mia Libreria di Giochi</h1>
-    <p>Esplora, filtra e scopri cosa intavolare stasera</p>
+    <h1>🎲 Catalogo Salvatore Games</h1>
+    <div id="nav-links"></div>
 </header>
 
 <div class="container">
     <aside>
-        <h3>🔍 Filtri Rapidi</h3>
+        <h3>🔍 Filtri e Ordinamento</h3>
         
         <div class="filter-group">
-            <label><i class="fas fa-users"></i> Quanti siete?</label>
-            <input type="number" id="f-players" min="1" max="20" placeholder="Es: 4">
+            <label><i class="fas fa-sort"></i> Ordina per:</label>
+            <select id="f-sort">
+                <option value="name_asc">Nome (A-Z)</option>
+                <option value="voto_desc">Miglior Voto BGG</option>
+                <option value="poll_desc">Più votati nei sondaggi</option>
+                <option value="diff_asc">Difficoltà: Facile → Difficile</option>
+                <option value="diff_desc">Difficoltà: Difficile → Facile</option>
+                <option value="players_desc">Capienza (Più giocatori)</option>
+            </select>
         </div>
 
+        <hr style="width:100%; border:0; border-top:1px solid #eee;">
+
         <div class="filter-group">
-            <label><i class="fas fa-clock"></i> Tempo Max (min)</label>
-            <input type="number" id="f-time" placeholder="Es: 60">
+            <label><i class="fas fa-users"></i> Numero Giocatori</label>
+            <input type="number" id="f-players" placeholder="Es: 4">
         </div>
 
         <div class="filter-group">
             <label><i class="fas fa-layer-group"></i> Categoria</label>
             <select id="f-type">
-                <option value="all">Tutte le categorie</option>
+                <option value="all">Tutte</option>
                 <option value="Strategia">Strategia</option>
                 <option value="Famiglie">Per Famiglie</option>
                 <option value="Party Game">Party Game</option>
                 <option value="Tematico">Tematico</option>
-                <option value="Astratto">Astratto</option>
             </select>
         </div>
 
-        <button id="btn-filtra">APPLICA FILTRI</button>
+        <button id="btn-filtra">AGGIORNA ELENCO</button>
 
-        <div class="quick-link-list" id="quick-links">
-            <strong>📚 Elenco Rapido:</strong>
-        </div>
+        <div id="quick-links" style="font-size: 0.8em; color: #777; margin-top: 10px;">
+            </div>
     </aside>
 
     <main>
-        <div id="game-grid">
-            </div>
+        <div id="game-grid"></div>
     </main>
 </div>
 
 <script type="module">
-    import { db, auth } from "./firebase.js";
-    import { collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { db } from "./firebase.js";
+    import { collection, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     let TUTTI_I_GIOCHI = [];
-    const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
+    let POLL_STATS = {}; // Per contare quante volte un gioco è stato votato nei sondaggi
 
-    // 1. Controllo Admin e Navigazione
-    onAuthStateChanged(auth, (user) => {
-        if (user && user.email === ADMIN_EMAIL) {
-            const adminLink = document.createElement('a');
-            adminLink.href = "admin.html";
-            adminLink.style.cssText = "color: #bdc3c7; text-decoration: none; font-size: 0.9em; border: 1px solid #bdc3c7; padding: 4px 10px; border-radius: 5px;";
-            adminLink.innerHTML = '<i class="fas fa-user-shield"></i> Admin';
-            document.getElementById('nav-links').appendChild(adminLink);
+    // 1. CARICAMENTO DATI
+    async function init() {
+        // Recuperiamo i voti dai sondaggi per l'ordinamento "Più votati"
+        const pollsSnap = await getDocs(collection(db, "polls"));
+        for (const pollDoc of pollsSnap.docs) {
+            const votesSnap = await getDocs(collection(db, `polls/${pollDoc.id}/votes`));
+            votesSnap.forEach(v => {
+                const gameName = v.data().game;
+                POLL_STATS[gameName] = (POLL_STATS[gameName] || 0) + 1;
+            });
         }
-    });
 
-    // 2. Caricamento Real-time da Firebase
-    const q = query(collection(db, "giochi"), orderBy("name", "asc"));
-    
-    onSnapshot(q, (snapshot) => {
-        TUTTI_I_GIOCHI = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-        
-        console.log("Dati caricati:", TUTTI_I_GIOCHI.length);
-        applicaFiltri(); 
-    });
+        // Ascolto Real-time dei giochi
+        onSnapshot(collection(db, "giochi"), (snapshot) => {
+            TUTTI_I_GIOCHI = snapshot.docs.map(doc => ({
+                id: doc.id,
+                pollCount: POLL_STATS[doc.data().name] || 0,
+                ...doc.data()
+            }));
+            applicaFiltri(); 
+        });
+    }
 
-    // 3. Logica Filtri
+    // 2. LOGICA FILTRI E ORDINAMENTO
     window.applicaFiltri = () => {
         const players = document.getElementById('f-players').value;
-        const time = document.getElementById('f-time').value;
         const type = document.getElementById('f-type').value;
+        const sortType = document.getElementById('f-sort').value;
 
-        const filtrati = TUTTI_I_GIOCHI.filter(g => {
+        // Filtro
+        let filtrati = TUTTI_I_GIOCHI.filter(g => {
             const okPlayers = !players || (players >= g.minP && players <= g.maxP);
-            const okTime = !time || (g.time <= time);
             const okType = (type === "all") || (g.type && g.type.includes(type));
-            return okPlayers && okTime && okType;
+            return okPlayers && okType;
+        });
+
+        // Ordinamento
+        filtrati.sort((a, b) => {
+            const diffMap = {"Leggero": 1, "Medio": 2, "Impegnativo": 3, "Hardcore": 4};
+            
+            switch(sortType) {
+                case "name_asc": return a.name.localeCompare(b.name);
+                case "voto_desc": return (parseFloat(b.voto) || 0) - (parseFloat(a.voto) || 0);
+                case "poll_desc": return b.pollCount - a.pollCount;
+                case "diff_asc": return (diffMap[a.difficulty] || 0) - (diffMap[b.difficulty] || 0);
+                case "diff_desc": return (diffMap[b.difficulty] || 0) - (diffMap[a.difficulty] || 0);
+                case "players_desc": return b.maxP - a.maxP;
+                default: return 0;
+            }
         });
 
         renderizza(filtrati);
     };
 
     document.getElementById('btn-filtra').onclick = applicaFiltri;
+    document.getElementById('f-sort').onchange = applicaFiltri;
 
-    // 4. Renderizzazione Grafica
+    // 3. RENDER
     function renderizza(lista) {
         const grid = document.getElementById('game-grid');
-        const quickLinks = document.getElementById('quick-links');
-        
-        grid.innerHTML = "";
-        quickLinks.innerHTML = "<strong>📚 Elenco Rapido:</strong>";
-
-        if (lista.length === 0) {
-            grid.innerHTML = "<div style='grid-column: 1/-1; text-align: center; padding: 40px;'>Nessun gioco trovato con questi filtri. 🎲</div>";
-            return;
-        }
-
-        lista.forEach(g => {
-            // Card Griglia
-            const card = document.createElement('div');
-            card.className = 'game-card';
-            
-            // Gestione voto (se N.D. non mostriamo la stella)
-            const votoHtml = g.voto && g.voto !== "N.D." ? 
-                `<div class="voto-badge"><i class="fas fa-star"></i> ${g.voto}</div>` : '';
-
-            card.innerHTML = `
-                ${votoHtml}
-                <img src="${g.thumb || 'https://via.placeholder.com/240x200?text=No+Image'}" alt="${g.name}">
+        grid.innerHTML = lista.map(g => `
+            <div class="game-card">
+                ${g.voto && g.voto !== "N.D." ? `<div class="voto-badge"><i class="fas fa-star"></i> ${g.voto}</div>` : ''}
+                ${g.pollCount > 0 ? `<div class="poll-badge"><i class="fas fa-fire"></i> ${g.pollCount} voti</div>` : ''}
+                
+                <img src="${g.thumb || 'https://via.placeholder.com/260x180'}" alt="${g.name}">
+                
                 <div class="game-card-content">
                     <h4>${g.name}</h4>
                     <div class="info"><i class="fas fa-users"></i> ${g.minP}-${g.maxP} Giocatori</div>
-                    <div class="info"><i class="fas fa-hourglass-half"></i> ${g.time} Minuti</div>
+                    <div class="info"><i class="fas fa-clock"></i> ${g.time} min</div>
                     
                     <div class="tag-container">
                         <span class="tag">${g.type || 'Board Game'}</span>
-                        ${g.difficulty ? `<span class="tag" style="background:#d5f5e3; color:#1b5e20;">${g.difficulty}</span>` : ''}
+                        ${g.difficulty ? `<span class="tag" style="background:#e8f8f5; color:#16a085;">${g.difficulty}</span>` : ''}
                     </div>
                     
-                    <a href="${g.link || '#'}" target="_blank" class="btn-rules">
-                        <i class="fas fa-external-link-alt"></i> DETTAGLI BGG
-                    </a>
+                    <a href="${g.link || '#'}" target="_blank" class="btn-rules">DETTAGLI BGG</a>
                 </div>
-            `;
-            grid.appendChild(card);
-
-            // Link Sidebar
-            const sLink = document.createElement('a');
-            sLink.href = g.link || '#';
-            sLink.target = "_blank";
-            sLink.innerText = `• ${g.name}`;
-            quickLinks.appendChild(sLink);
-        });
+            </div>
+        `).join('');
     }
+
+    init();
 </script>
 
 </body>
