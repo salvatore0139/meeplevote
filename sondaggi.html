@@ -71,12 +71,16 @@
 
 <script type="module">
     import { db, auth } from "./firebase.js";
+    // Importiamo le funzioni necessarie di Firestore e Auth
+    import { collection, doc, getDoc, setDoc, onSnapshot, query, where, addDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     let currentUser = null;
     let userDoc = null;
     let activePoll = null;
     let allGames = [];
     let currentVotes = [];
+    let unsubscribeVotes = null; // Variabile per tracciare il listener della sottocollezione
 
     // Listener Autenticazione
     onAuthStateChanged(auth, async (user) => {
@@ -101,21 +105,37 @@
         renderUI();
     });
 
-    // Listener Database
+    // Listener Database: Tutti i giochi
     onSnapshot(collection(db, "giochi"), (snap) => {
         allGames = snap.docs.map(d => d.data());
         renderUI();
     });
 
+    // Listener Database: Sondaggio Attivo
     onSnapshot(query(collection(db, "polls"), where("status", "==", "active")), (snap) => {
-        activePoll = snap.docs.map(d => ({id: d.id, ...d.data()}))[0];
-        renderUI();
-    });
+        if (!snap.empty) {
+            activePoll = {id: snap.docs[0].id, ...snap.docs[0].data()};
+            
+            // Gestione della sottocollezione "voti": accendiamo l'ascolto SOLO per questo sondaggio
+            if (unsubscribeVotes) unsubscribeVotes(); // Spegne l'ascolto precedente (se esiste)
+            
+            unsubscribeVotes = onSnapshot(collection(db, "polls", activePoll.id, "votes"), (vSnap) => {
+                currentVotes = vSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                renderUI();
+                updateRanking();
+            });
 
-    onSnapshot(collection(db, "votes"), (snap) => {
-        currentVotes = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        renderUI();
-        updateRanking();
+        } else {
+            // Nessun sondaggio attivo
+            activePoll = null;
+            currentVotes = [];
+            if (unsubscribeVotes) {
+                unsubscribeVotes(); // Spegniamo l'ascolto dei voti
+                unsubscribeVotes = null;
+            }
+            renderUI();
+            updateRanking();
+        }
     });
 
     function renderUI() {
@@ -131,7 +151,8 @@
         status.innerHTML = `🔥 Sondaggio attivo per ${activePoll.players} giocatori!`;
         const filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
         
-        const mioVoto = currentVotes.find(v => v.pollId === activePoll.id && v.userId === currentUser?.uid);
+        // Ora currentVotes contiene GIA' solo i voti del sondaggio attivo, basta controllare l'utente
+        const mioVoto = currentVotes.find(v => v.userId === currentUser?.uid);
 
         grid.innerHTML = filtrati.map(g => {
             const isQuestoVoto = mioVoto && mioVoto.game === g.name;
@@ -152,10 +173,15 @@
     }
 
     function updateRanking() {
-        if(!activePoll) return;
+        if(!activePoll) {
+            document.getElementById('classifica-voti').innerHTML = "Nessun sondaggio attivo.";
+            return;
+        }
         const counts = {};
-        currentVotes.filter(v => v.pollId === activePoll.id).forEach(v => counts[v.game] = (counts[v.game] || 0) + 1);
+        // Dato che abbiamo usato la subcollection, currentVotes ha solo i voti pertinenti a questo sondaggio
+        currentVotes.forEach(v => counts[v.game] = (counts[v.game] || 0) + 1);
         const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+        
         document.getElementById('classifica-voti').innerHTML = sorted.map(([g, v]) => `
             <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
                 <span>${g}</span> <b style="color:var(--orange)">${v}</b>
@@ -180,8 +206,8 @@
     };
 
     window.vota = async (gameName) => {
-        await addDoc(collection(db, "votes"), {
-            pollId: activePoll.id,
+        // Scriviamo il voto nella SOTTOCOLLEZIONE corretta: polls -> ID -> votes
+        await addDoc(collection(db, "polls", activePoll.id, "votes"), {
             userId: currentUser.uid,
             username: userDoc.username,
             game: gameName,
@@ -190,7 +216,10 @@
     };
 
     window.annullaVoto = async (id) => {
-        if(confirm("Annullare il voto?")) await deleteDoc(doc(db, "votes", id));
+        // Cancelliamo il voto dalla SOTTOCOLLEZIONE
+        if(confirm("Annullare il voto?")) {
+            await deleteDoc(doc(db, "polls", activePoll.id, "votes", id));
+        }
     };
 
     window.logout = () => signOut(auth);
