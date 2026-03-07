@@ -5,173 +5,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vota Sondaggio - Salvatore</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --orange: #e67e22; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --orange: #e67e22; --danger: #e74c3c; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
-        
-        /* Navbar & Header */
         nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
         nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
-        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-
+        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
         .container { display: flex; max-width: 1400px; margin: 20px auto; gap: 20px; padding: 0 15px; }
-
-        /* SIDEBAR SINISTRA (Filtri) */
-        aside.sidebar-left { width: 280px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
-        .filter-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.9em; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-
-        /* MAIN (Griglia Giochi) */
+        aside { width: 300px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
         main { flex-grow: 1; }
         .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
         .game-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
         .game-card img { width: 100%; height: 140px; object-fit: cover; }
-        .game-card-content { padding: 12px; flex-grow: 1; }
-        .game-card h4 { margin: 0 0 8px 0; font-size: 1em; color: var(--primary); }
-        
-        .btn-vota { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-vota:disabled { background: #bdc3c7; cursor: not-allowed; }
-
-        /* SIDEBAR DESTRA (Classifica) */
-        aside.sidebar-right { width: 250px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
-        .rank-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
-        .rank-count { background: var(--orange); color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
-
-        @media (max-width: 1024px) { .container { flex-direction: column; } aside { width: 100% !important; position: static !important; } }
+        .game-card-content { padding: 12px; flex-grow: 1; text-align: center; }
+        .btn-vota { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .btn-vota:disabled { background: #bdc3c7; }
+        .btn-danger { background: var(--danger); width: 100%; padding: 10px; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        @media (max-width: 1024px) { .container { flex-direction: column; } aside { width: 100% !important; position: static; } }
     </style>
 </head>
 <body>
 
 <nav>
-    <div style="font-weight: bold; font-size: 1.2em;">🎲 My Boardgame Collection</div>
-    <div>
-        <a href="index.html">Catalogo</a>
-        <a href="sondaggi.html" style="color: var(--orange); font-weight: bold;">🔥 Vota Gioco</a>
-        <a href="admin.html" style="opacity: 0.6;">Admin</a>
-    </div>
+    <div style="font-weight: bold;">🎲 Salvatore Games</div>
+    <div><a href="index.html">Catalogo</a> <a href="sondaggi.html" style="color:var(--orange)">Vota</a> <a href="admin.html">Admin</a></div>
 </nav>
 
 <header><h1>🔥 Partecipa al Sondaggio</h1></header>
 
 <div class="container">
-    <aside class="sidebar-left">
-        <h3>👤 Identificati</h3>
-        <div class="filter-group">
-            <label>Tuo Username</label>
-            <input type="text" id="username" placeholder="Inserisci nome..." oninput="renderizzaTutto()">
+    <aside>
+        <div id="auth-box">
+            <h3>🔐 Accedi per votare</h3>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="pass" placeholder="Password">
+            <button class="btn-vota" onclick="handleLogin()">ACCEDI</button>
+            <p style="font-size:0.7em; text-align:center; margin-top:10px;">Non hai un account? <a href="#" onclick="toggleAuth()">Registrati</a></p>
+        </div>
+
+        <div id="reg-box" style="display:none;">
+            <h3>📝 Registrazione</h3>
+            <input type="text" id="reg-user" placeholder="Nome/Username">
+            <input type="email" id="reg-email" placeholder="Email">
+            <input type="password" id="reg-pass" placeholder="Password">
+            <button class="btn-vota" style="background:var(--blue)" onclick="handleSignup()">REGISTRATI</button>
+            <p style="font-size:0.7em; text-align:center; margin-top:10px;"><a href="#" onclick="toggleAuth()">Torna al Login</a></p>
+        </div>
+
+        <div id="user-info" style="display:none;">
+            <h3>👤 Profilo</h3>
+            <p id="user-display"></p>
+            <div id="status-validation" style="font-size:0.8em; margin-bottom:10px;"></div>
+            <button onclick="logout()" style="border:none; background:none; color:red; cursor:pointer;">Esci</button>
         </div>
         <hr>
-        <h3>🔍 Filtri Extra</h3>
-        <div class="filter-group">
-            <label>Categoria</label>
-            <select id="f-type" onchange="renderizzaTutto()">
-                <option value="all">Tutte le categorie</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>Tempo Max (min)</label>
-            <input type="number" id="f-time" placeholder="Es: 60" oninput="renderizzaTutto()">
-        </div>
+        <h3>📊 Classifica</h3>
+        <div id="classifica-voti">Nessun sondaggio attivo.</div>
     </aside>
 
     <main>
-        <div id="status-sondaggio" style="margin-bottom: 15px; font-weight: bold; color: var(--primary);"></div>
+        <div id="status-sondaggio" style="margin-bottom: 15px; font-weight: bold;"></div>
         <div id="game-grid" class="game-grid"></div>
     </main>
-
-    <aside class="sidebar-right">
-        <h3>📊 Classifica</h3>
-        <div id="classifica-voti">Caricamento...</div>
-    </aside>
 </div>
 
-<script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBVH44nqpTmS8o8i1mzlEdgUPhAfp8EiG0hvmJOiGigWR0NO3aajMjhtNHcWpwOt4z/exec";
-    let databaseGiochi = [];
-    let datiSondaggi = { sondaggi: [], voti: [] };
+<script type="module">
+    import { db, auth } from "./firebase.js";
 
-    async function inizializza() {
-        const respG = await fetch('giochi.json');
-        databaseGiochi = await respG.json();
+    let currentUser = null;
+    let userDoc = null;
+    let activePoll = null;
+    let allGames = [];
+    let currentVotes = [];
+
+    // Listener Autenticazione
+    onAuthStateChanged(auth, async (user) => {
+        const aBox = document.getElementById('auth-box');
+        const rBox = document.getElementById('reg-box');
+        const uBox = document.getElementById('user-info');
         
-        // Popola categorie
-        const cats = [...new Set(databaseGiochi.map(g => g.type))].sort();
-        const select = document.getElementById('f-type');
-        cats.forEach(c => { select.innerHTML += `<option value="${c}">${c}</option>`; });
+        if (user) {
+            currentUser = user;
+            const d = await getDoc(doc(db, "utenti", user.uid));
+            userDoc = d.data();
+            aBox.style.display = rBox.style.display = 'none';
+            uBox.style.display = 'block';
+            document.getElementById('user-display').innerHTML = `Ciao, <b>${userDoc.username}</b>`;
+            document.getElementById('status-validation').innerHTML = userDoc.validato ? "✅ Account Verificato" : "⏳ In attesa di verifica admin";
+        } else {
+            currentUser = null;
+            userDoc = null;
+            aBox.style.display = 'block';
+            uBox.style.display = 'none';
+        }
+        renderUI();
+    });
 
-        aggiornaDati();
-        setInterval(aggiornaDati, 10000);
-    }
+    // Listener Database
+    onSnapshot(collection(db, "giochi"), (snap) => {
+        allGames = snap.docs.map(d => d.data());
+        renderUI();
+    });
 
-    async function aggiornaDati() {
-        const res = await fetch(WEB_APP_URL);
-        datiSondaggi = await res.json();
-        renderizzaTutto();
-    }
+    onSnapshot(query(collection(db, "polls"), where("status", "==", "active")), (snap) => {
+        activePoll = snap.docs.map(d => ({id: d.id, ...d.data()}))[0];
+        renderUI();
+    });
 
-    function renderizzaTutto() {
+    onSnapshot(collection(db, "votes"), (snap) => {
+        currentVotes = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        renderUI();
+        updateRanking();
+    });
+
+    function renderUI() {
         const grid = document.getElementById('game-grid');
-        const info = document.getElementById('status-sondaggio');
-        const user = document.getElementById('username').value.trim();
-        const fType = document.getElementById('f-type').value;
-        const fTime = document.getElementById('f-time').value;
-
-        const attivo = datiSondaggi.sondaggi.find(s => s.stato === "Attivo");
+        const status = document.getElementById('status-sondaggio');
         
-        if (!attivo) {
-            info.innerHTML = "❌ Nessun sondaggio attivo al momento.";
+        if (!activePoll) {
+            status.innerHTML = "😴 Nessun sondaggio attivo.";
             grid.innerHTML = "";
             return;
         }
 
-        info.innerHTML = `✅ Sondaggio Aperto per ${attivo.giocatori} giocatori!`;
+        status.innerHTML = `🔥 Sondaggio attivo per ${activePoll.players} giocatori!`;
+        const filtrati = allGames.filter(g => activePoll.players >= g.minP && activePoll.players <= g.maxP);
         
-        // Filtro base (giocatori) + extra
-        let filtrati = databaseGiochi.filter(g => attivo.giocatori >= g.minP && attivo.giocatori <= g.maxP);
-        if(fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
-        if(fTime) filtrati = filtrati.filter(g => g.time <= fTime);
+        const mioVoto = currentVotes.find(v => v.pollId === activePoll.id && v.userId === currentUser?.uid);
 
         grid.innerHTML = filtrati.map(g => {
-            const giaVotato = datiSondaggi.voti.some(v => v.idSondaggio === attivo.id && v.username.toLowerCase() === user.toLowerCase() && v.gioco === g.name);
+            const isQuestoVoto = mioVoto && mioVoto.game === g.name;
             return `
                 <div class="game-card">
                     <img src="${g.thumb}">
                     <div class="game-card-content">
                         <h4>${g.name}</h4>
-                        <div style="font-size:0.75em; color: #666; margin-bottom:10px;">${g.type} | ${g.time}min</div>
-                        <button class="btn-vota" ${giaVotato || !user ? 'disabled' : ''} onclick="vota('${attivo.id}', '${g.name.replace(/'/g, "\\'")}')">
-                            ${giaVotato ? 'VOTATO' : 'VOTA'}
-                        </button>
+                        ${isQuestoVoto ? 
+                            `<button class="btn-danger" onclick="annullaVoto('${mioVoto.id}')">ANNULLA VOTO</button>` : 
+                            `<button class="btn-vota" ${!userDoc?.validato || mioVoto ? 'disabled' : ''} onclick="vota('${g.name}')">
+                                ${!currentUser ? 'ACCEDI' : (!userDoc?.validato ? 'ATTENDI OK' : (mioVoto ? 'GIÀ VOTATO' : 'VOTA'))}
+                            </button>`
+                        }
                     </div>
-                </div>
-            `;
+                </div>`;
         }).join('');
-
-        aggiornaClassifica();
     }
 
-    function aggiornaClassifica() {
-        const area = document.getElementById('classifica-voti');
-        const conteggio = {};
-        const attivo = datiSondaggi.sondaggi.find(s => s.stato === "Attivo");
-        attivo.voti.forEach(v => { conteggio[v.gioco] = (conteggio[v.gioco] || 0) + 1; });
-        const ordinata = Object.entries(conteggio).sort((a,b) => b[1] - a[1]);
+    function updateRanking() {
+        if(!activePoll) return;
+        const counts = {};
+        currentVotes.filter(v => v.pollId === activePoll.id).forEach(v => counts[v.game] = (counts[v.game] || 0) + 1);
+        const sorted = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+        document.getElementById('classifica-voti').innerHTML = sorted.map(([g, v]) => `
+            <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #eee;">
+                <span>${g}</span> <b style="color:var(--orange)">${v}</b>
+            </div>`).join('') || "Ancora nessun voto.";
+    }
+
+    window.handleLogin = () => {
+        signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value)
+            .catch(e => alert("Errore: " + e.message));
+    };
+
+    window.handleSignup = async () => {
+        const user = document.getElementById('reg-user').value;
+        const email = document.getElementById('reg-email').value;
+        const pass = document.getElementById('reg-pass').value;
+        if(!user) return alert("Inserisci un nome!");
         
-        area.innerHTML = ordinata.length ? ordinata.map(([gioco, voti]) => `
-            <div class="rank-item">
-                <span>${gioco}</span>
-                <span class="rank-count">${voti}</span>
-            </div>
-        `).join('') : "Nessun voto.";
-    }
+        try {
+            const res = await createUserWithEmailAndPassword(auth, email, pass);
+            await setDoc(doc(db, "utenti", res.user.uid), { username: user, email: email, validato: false });
+        } catch(e) { alert(e.message); }
+    };
 
-    async function vota(idS, gioco) {
-        const user = document.getElementById('username').value.trim();
-        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ azione: "vota", idSondaggio: idS, username: user, gioco: gioco }) });
-        aggiornaDati();
-    }
+    window.vota = async (gameName) => {
+        await addDoc(collection(db, "votes"), {
+            pollId: activePoll.id,
+            userId: currentUser.uid,
+            username: userDoc.username,
+            game: gameName,
+            timestamp: serverTimestamp()
+        });
+    };
 
-    inizializza();
+    window.annullaVoto = async (id) => {
+        if(confirm("Annullare il voto?")) await deleteDoc(doc(db, "votes", id));
+    };
+
+    window.logout = () => signOut(auth);
+    window.toggleAuth = () => {
+        const a = document.getElementById('auth-box');
+        const r = document.getElementById('reg-box');
+        a.style.display = a.style.display === 'none' ? 'block' : 'none';
+        r.style.display = r.style.display === 'none' ? 'block' : 'none';
+    };
 </script>
 </body>
 </html>
