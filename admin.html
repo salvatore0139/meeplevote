@@ -169,19 +169,21 @@
             const snap = await getDocs(q);
             if (!snap.empty) { saltati++; continue; }
 
-            // 2. Dati base
+            // 2. Estrazione dati con paracadute (?? o ||)
             const name = item.getElementsByTagName("name")[0]?.textContent || "Titolo Sconosciuto";
             const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent || "";
             const stats = item.getElementsByTagName("stats")[0];
-            
-            // 3. Voto
-            const ratingEl = stats?.getElementsByTagName("rating")[0];
-            const averageRating = ratingEl?.getElementsByTagName("average")[0]?.getAttribute("value");
-            const votoFinale = (averageRating && averageRating !== "N/A") ? parseFloat(averageRating).toFixed(1) : "N.D.";
+                
+            // 3. Voto sicuro
+            const avgRating = stats?.querySelector("rating average")?.getAttribute("value");
+            const voto = (avgRating && avgRating !== "N/A") ? parseFloat(avgRating).toFixed(1) : "N.D.";
 
-            // 4. CATEGORIA (CORRETTO: Gestisce i giochi senza rank 'family')
-            let tipoTradotto = "Gioco da tavolo"; // Valore predefinito se non trova nulla
-            const ranks = item.getElementsByTagName("rank");
+            // 4. Categoria sicura
+            let catTradotta = "Gioco da tavolo";
+            const familyRank = Array.from(item.getElementsByTagName("rank")).find(r => r.getAttribute("type") === "family");
+            if (familyRank) {
+                catTradotta = traduciCategoria(familyRank.getAttribute("name"));
+            }
             
             if (ranks && ranks.length > 0) {
                 for (let r of ranks) {
