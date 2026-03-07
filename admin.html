@@ -9,23 +9,21 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); display: none; }
         nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
         nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
-        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; }
         .container { display: flex; max-width: 1600px; margin: 20px auto; gap: 20px; padding: 0 15px; }
-        aside, main { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
-        .col-left { width: 320px; position: sticky; top: 20px; }
-        .col-center { flex-grow: 1; }
-        .col-right { width: 320px; }
-        h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px; font-size: 1.1em; }
-        .card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; margin-bottom: 10px; }
-        .btn { width: 100%; padding: 10px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; margin-top: 5px; }
+        aside, main { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .col-left { width: 300px; } .col-center { flex-grow: 1; } .col-right { width: 350px; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 400px; border-radius: 10px; }
+        
+        input, select { width: 100%; padding: 10px; margin: 5px 0 15px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; color: white; }
         .btn-accent { background: var(--accent); }
         .btn-blue { background: var(--blue); }
-        .btn-danger { background: var(--danger); }
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-        .status-badge { padding: 3px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
-        .status-attivo { background: #d4edda; color: #155724; }
+        .btn-danger { background: var(--danger); margin-top: 10px; }
+        .card-inner { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -35,179 +33,140 @@
     <div><a href="index.html">Catalogo</a> <a href="#" id="btn-logout">Esci</a></div>
 </nav>
 
-<header><h1>Gestione Database & Utenti</h1></header>
-
 <div class="container">
     <aside class="col-left">
         <h3>🚀 Sessione Attiva</h3>
         <div id="area-creazione">
             <input type="number" id="poll-players" placeholder="N. Giocatori">
-            <button class="btn btn-accent" id="btn-start-poll">AVVIA NUOVO</button>
+            <button class="btn btn-accent" id="btn-start-poll">AVVIA SONDAGGIO</button>
         </div>
         <div id="active-poll-info" style="display:none;" class="card-inner">
             <p id="active-p-text"></p>
-            <button class="btn btn-danger" id="btn-stop-poll">CHIUDI ORA</button>
+            <button class="btn btn-danger" id="btn-stop-poll">CHIUDI SONDAGGIO</button>
         </div>
-
-        <h3 style="margin-top:20px;">👥 Convalida Utenti</h3>
-        <div id="user-list">Caricamento utenti...</div>
     </aside>
 
     <main class="col-center">
-        <h3>📜 Storico Sondaggi</h3>
-        <table id="history-table">
-            <thead><tr><th>Data</th><th>P.</th><th>Stato</th><th>Azioni</th></tr></thead>
-            <tbody></tbody>
-        </table>
+        <h3>📦 Gestione Giochi</h3>
+        <button class="btn btn-accent" id="open-modal-btn">➕ AGGIUNGI NUOVO GIOCO</button>
+        <hr>
+        <div id="import-section" class="card-inner">
+            <h4>📁 Importazione Massiva JSON</h4>
+            <input type="file" id="json-input" accept=".json">
+            <button class="btn btn-blue" id="btn-import-json">CARICA JSON</button>
+        </div>
     </main>
 
     <aside class="col-right">
-        <h3>📂 Importa da BGG (XML)</h3>
-        <input type="file" id="xml-input" accept=".xml">
-        <button class="btn btn-blue" id="btn-import-xml">IMPORTA GIOCHI</button>
-        <hr>
-        <h3>➕ Aggiunta Manuale</h3>
-        <input type="text" id="g-name" placeholder="Titolo">
-        <button class="btn btn-blue" id="btn-manual-add">AGGIUNGI</button>
+        <h3>👥 Utenti da convalidare</h3>
+        <div id="user-list">Caricamento...</div>
     </aside>
+</div>
+
+<div id="gameModal" class="modal">
+    <div class="modal-content">
+        <h3>Nuovo Gioco</h3>
+        <input type="text" id="m-name" placeholder="Titolo (es. Jamaica)">
+        <input type="text" id="m-bggId" placeholder="BGG ID (es. 28023)">
+        <input type="text" id="m-thumb" placeholder="URL Immagine">
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="m-minP" placeholder="Min P.">
+            <input type="number" id="m-maxP" placeholder="Max P.">
+        </div>
+        <input type="number" id="m-time" placeholder="Durata (min)">
+        <input type="text" id="m-type" placeholder="Tipo (es. Corse / Pirati)">
+        <input type="text" id="m-voto" placeholder="Voto BGG (es. 7.5)">
+        <select id="m-difficulty">
+            <option value="Molto Facile">Molto Facile</option>
+            <option value="Facile">Facile</option>
+            <option value="Medio-Facile">Medio-Facile</option>
+            <option value="Medio">Medio</option>
+            <option value="Difficile">Difficile</option>
+        </select>
+        <button class="btn btn-accent" id="btn-save-manual">SALVA NEL DATABASE</button>
+        <button class="btn btn-danger" id="close-modal-btn">ANNULLA</button>
+    </div>
 </div>
 
 <script type="module">
     import { db, auth } from "./firebase.js";
-    import { collection, doc, getDocs, addDoc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { collection, doc, getDocs, addDoc, updateDoc, query, where, serverTimestamp, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    const ADMIN_EMAIL = "salvatoredidato01@gmail.com"; 
-    let polls = [];
+    const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
 
-    const traduciCategoria = (cat) => {
-        if (!cat) return "Gioco da tavolo";
-        const dizionario = {
-            "strategygames": "Gioco di Strategia",
-            "familygames": "Gioco per Famiglie",
-            "partygames": "Party Game",
-            "thematicgames": "Gioco Tematico",
-            "wargames": "Wargame",
-            "abstracts": "Gioco Astratto",
-            "cbg": "Gioco per Bambini",
-            "customizable": "Gioco Personalizzabile"
-        };
-        return dizionario[cat.toLowerCase()] || cat;
-    };
-
+    // --- GESTIONE ACCESSO ---
     onAuthStateChanged(auth, (user) => {
-        if (user && user.email === ADMIN_EMAIL) {
-            document.body.style.display = 'block';
-            initAdmin();
-        } else {
-            alert("Accesso negato.");
-            window.location.href = "index.html";
-        }
+        if (user && user.email === ADMIN_EMAIL) { document.body.style.display = 'block'; initAdmin(); }
+        else { window.location.href = "index.html"; }
     });
 
-    function initAdmin() {
-        onSnapshot(query(collection(db, "polls"), orderBy("timestamp", "desc")), (snap) => {
-            polls = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            renderPolls();
-        });
+    // --- MODAL LOGIC ---
+    const modal = document.getElementById("gameModal");
+    document.getElementById("open-modal-btn").onclick = () => modal.style.display = "block";
+    document.getElementById("close-modal-btn").onclick = () => modal.style.display = "none";
 
-        onSnapshot(collection(db, "utenti"), (snap) => {
-            const list = document.getElementById('user-list');
-            list.innerHTML = snap.docs.map(d => {
-                const u = d.data();
-                return `<div class="card-inner" style="font-size:0.85em;">
-                        <b>${u.username}</b> (${u.validato ? '✅' : '⏳'})<br>
-                        ${!u.validato ? `<button class="btn btn-accent btn-valida" data-id="${d.id}" style="padding:2px; font-size:0.8em; width:auto;">Convalida</button>` : ''}
-                    </div>`;
-            }).join('');
-            document.querySelectorAll('.btn-valida').forEach(b => {
-                b.onclick = () => updateDoc(doc(db, "utenti", b.dataset.id), { validato: true });
-            });
-        });
-    }
+    // --- AGGIUNTA MANUALE ---
+    document.getElementById('btn-save-manual').onclick = async () => {
+        const gioco = {
+            name: document.getElementById('m-name').value,
+            bggId: document.getElementById('m-bggId').value,
+            thumb: document.getElementById('m-thumb').value,
+            minP: parseInt(document.getElementById('m-minP').value),
+            maxP: parseInt(document.getElementById('m-maxP').value),
+            time: parseInt(document.getElementById('m-time').value),
+            type: document.getElementById('m-type').value,
+            voto: document.getElementById('m-voto').value,
+            difficulty: document.getElementById('m-difficulty').value,
+            link: `https://boardgamegeek.com/boardgame/${document.getElementById('m-bggId').value}`,
+            addedAt: serverTimestamp()
+        };
 
-    function renderPolls() {
-        const active = polls.find(p => p.status === "active");
-        document.getElementById('area-creazione').style.display = active ? 'none' : 'block';
-        document.getElementById('active-poll-info').style.display = active ? 'block' : 'none';
-        if(active) document.getElementById('active-p-text').innerHTML = `Sondaggio per <b>${active.players}</b> giocatori`;
-        const tbody = document.querySelector('#history-table tbody');
-        tbody.innerHTML = polls.map(p => `<tr><td>${p.timestamp?.toDate().toLocaleDateString() || '...'}</td><td>${p.players}</td><td>${p.status}</td><td><button>🔎</button></td></tr>`).join('');
-    }
+        const q = query(collection(db, "giochi"), where("bggId", "==", gioco.bggId));
+        const snap = await getDocs(q);
+        if(!snap.empty) return alert("Errore: Questo gioco esiste già!");
 
-    // --- FUNZIONE IMPORTAZIONE CORRETTA ---
-    document.getElementById('btn-import-xml').addEventListener('click', async () => {
-        const fileInput = document.getElementById('xml-input');
-        const file = fileInput.files[0];
-        if (!file) return alert("Seleziona il file XML!");
+        await addDoc(collection(db, "giochi"), gioco);
+        alert("Gioco aggiunto!");
+        modal.style.display = "none";
+    };
 
-        const text = await file.text();
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "text/xml");
-        const items = Array.from(xml.getElementsByTagName("item"));
-        
-        alert(`Analisi di ${items.length} giochi...`);
-        let aggiunti = 0; let saltati = 0; let errori = 0;
+    // --- IMPORTAZIONE JSON ---
+    document.getElementById('btn-import-json').onclick = async () => {
+        const file = document.getElementById('json-input').files[0];
+        if(!file) return alert("Seleziona il file JSON!");
 
-        for (let item of items) {
-            try {
-                const bggId = item.getAttribute("objectid");
-                
-                // 1. Controllo duplicati
-                const q = query(collection(db, "giochi"), where("bggId", "==", bggId));
-                const snap = await getDocs(q);
-                if (!snap.empty) { saltati++; continue; }
+        const data = JSON.parse(await file.text());
+        let aggiunti = 0, saltati = 0;
 
-                // 2. Estrazione dati sicura
-                const name = item.getElementsByTagName("name")[0]?.textContent || "Titolo Sconosciuto";
-                const thumb = item.getElementsByTagName("thumbnail")[0]?.textContent || "";
-                const stats = item.getElementsByTagName("stats")[0];
-                
-                // 3. Voto
-                const avgRating = stats?.querySelector("rating average")?.getAttribute("value");
-                const votoFinale = (avgRating && avgRating !== "N/A") ? parseFloat(avgRating).toFixed(1) : "N.D.";
+        for(let g of data) {
+            const bggId = g.link.split('/').pop(); // Estrae ID dal link se manca bggId
+            const q = query(collection(db, "giochi"), where("bggId", "==", (g.bggId || bggId)));
+            const snap = await getDocs(q);
 
-                // 4. Categoria e Rank
-                let categoriaFinale = "Gioco da tavolo";
-                const ranks = Array.from(item.getElementsByTagName("rank"));
-                const familyRank = ranks.find(r => r.getAttribute("type") === "family");
-                if (familyRank) {
-                    categoriaFinale = traduciCategoria(familyRank.getAttribute("name"));
-                }
-
-                // 5. Scrittura su DB
+            if(snap.empty) {
                 await addDoc(collection(db, "giochi"), {
-                    bggId: bggId,
-                    name: name,
-                    thumb: thumb,
-                    minP: parseInt(stats?.getAttribute("minplayers")) || 1,
-                    maxP: parseInt(stats?.getAttribute("maxplayers")) || 1,
-                    time: parseInt(stats?.getAttribute("playingtime")) || 0,
-                    voto: votoFinale,
-                    type: categoriaFinale,
-                    difficulty: "",
-                    weight: 0,
-                    link: `https://boardgamegeek.com/boardgame/${bggId}`,
+                    ...g,
+                    bggId: g.bggId || bggId,
                     addedAt: serverTimestamp()
                 });
                 aggiunti++;
-
-            } catch (err) {
-                console.error("Errore su gioco:", err);
-                errori++;
-            }
+            } else { saltati++; }
         }
-        alert(`✅ Concluso!\n\nAggiunti: ${aggiunti}\nSaltati: ${saltati}\nErrori: ${errori}`);
-    });
+        alert(`Fatto! Aggiunti: ${aggiunti}, Saltati (doppioni): ${saltati}`);
+    };
 
-    document.getElementById('btn-start-poll').onclick = async () => {
-        const p = document.getElementById('poll-players').value;
-        if(p) await addDoc(collection(db, "polls"), { players: parseInt(p), status: "active", timestamp: serverTimestamp() });
-    };
-    document.getElementById('btn-stop-poll').onclick = async () => {
-        const active = polls.find(p => p.status === "active");
-        if(active) await updateDoc(doc(db, "polls", active.id), { status: "closed" });
-    };
+    function initAdmin() {
+        // Qui caricherai le liste utenti e sondaggi come prima
+        onSnapshot(collection(db, "utenti"), (snap) => {
+            document.getElementById('user-list').innerHTML = snap.docs.map(d => `
+                <div class="card-inner">
+                    ${d.data().username} ${d.data().validato ? '✅' : `<button onclick="valida('${d.id}')">Valida</button>`}
+                </div>
+            `).join('');
+        });
+    }
+    window.valida = (id) => updateDoc(doc(db, "utenti", id), { validato: true });
     document.getElementById('btn-logout').onclick = () => signOut(auth);
 </script>
 </body>
