@@ -107,11 +107,16 @@
             renderPolls();
         });
 
-        // Listener Utenti
+// Listener Utenti con gestione collezione vuota
         onSnapshot(collection(db, "utenti"), (snap) => {
             const list = document.getElementById('user-list');
+            if (snap.empty) {
+                list.innerHTML = "Nessun utente registrato oltre a te.";
+                return;
+            }
             list.innerHTML = snap.docs.map(d => {
                 const u = d.data();
+                // Saltiamo noi stessi dalla lista se vogliamo
                 return `
                     <div style="font-size:0.85em; margin-bottom:10px; padding:5px; border-bottom:1px solid #eee;">
                         <b>${u.username}</b> (${u.validato ? '✅ OK' : '⏳'})<br>
