@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vota Sondaggio - Salvatore</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #ecf0f1; --text: #333; --orange: #e67e22; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
+        
+        /* Navbar & Header */
+        nav { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
+        nav a { color: white; text-decoration: none; margin-left: 20px; font-size: 0.9em; }
+        header { background-color: var(--primary); color: white; padding: 1rem; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        .container { display: flex; max-width: 1400px; margin: 20px auto; gap: 20px; padding: 0 15px; }
+
+        /* SIDEBAR SINISTRA (Filtri) */
+        aside.sidebar-left { width: 280px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; position: sticky; top: 20px; }
+        .filter-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.9em; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+
+        /* MAIN (Griglia Giochi) */
+        main { flex-grow: 1; }
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .game-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .game-card img { width: 100%; height: 140px; object-fit: cover; }
+        .game-card-content { padding: 12px; flex-grow: 1; }
+        .game-card h4 { margin: 0 0 8px 0; font-size: 1em; color: var(--primary); }
+        
+        .btn-vota { width: 100%; background: var(--accent); color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-vota:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        /* SIDEBAR DESTRA (Classifica) */
+        aside.sidebar-right { width: 250px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
+        .rank-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .rank-count { background: var(--orange); color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+
+        @media (max-width: 1024px) { .container { flex-direction: column; } aside { width: 100% !important; position: static !important; } }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div style="font-weight: bold; font-size: 1.2em;">🎲 My Boardgame Collection</div>
+    <div>
+        <a href="index.html">Catalogo</a>
+        <a href="sondaggi.html" style="color: var(--orange); font-weight: bold;">🔥 Vota Gioco</a>
+        <a href="admin.html" style="opacity: 0.6;">Admin</a>
+    </div>
+</nav>
+
+<header><h1>🔥 Partecipa al Sondaggio</h1></header>
+
+<div class="container">
+    <aside class="sidebar-left">
+        <h3>👤 Identificati</h3>
+        <div class="filter-group">
+            <label>Tuo Username</label>
+            <input type="text" id="username" placeholder="Inserisci nome..." oninput="renderizzaTutto()">
+        </div>
+        <hr>
+        <h3>🔍 Filtri Extra</h3>
+        <div class="filter-group">
+            <label>Categoria</label>
+            <select id="f-type" onchange="renderizzaTutto()">
+                <option value="all">Tutte le categorie</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Tempo Max (min)</label>
+            <input type="number" id="f-time" placeholder="Es: 60" oninput="renderizzaTutto()">
+        </div>
+    </aside>
+
+    <main>
+        <div id="status-sondaggio" style="margin-bottom: 15px; font-weight: bold; color: var(--primary);"></div>
+        <div id="game-grid" class="game-grid"></div>
+    </main>
+
+    <aside class="sidebar-right">
+        <h3>📊 Classifica</h3>
+        <div id="classifica-voti">Caricamento...</div>
+    </aside>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyBVH44nqpTmS8o8i1mzlEdgUPhAfp8EiG0hvmJOiGigWR0NO3aajMjhtNHcWpwOt4z/exec";
+    let databaseGiochi = [];
+    let datiSondaggi = { sondaggi: [], voti: [] };
+
+    async function inizializza() {
+        const respG = await fetch('giochi.json');
+        databaseGiochi = await respG.json();
+        
+        // Popola categorie
+        const cats = [...new Set(databaseGiochi.map(g => g.type))].sort();
+        const select = document.getElementById('f-type');
+        cats.forEach(c => { select.innerHTML += `<option value="${c}">${c}</option>`; });
+
+        aggiornaDati();
+        setInterval(aggiornaDati, 10000);
+    }
+
+    async function aggiornaDati() {
+        const res = await fetch(WEB_APP_URL);
+        datiSondaggi = await res.json();
+        renderizzaTutto();
+    }
+
+    function renderizzaTutto() {
+        const grid = document.getElementById('game-grid');
+        const info = document.getElementById('status-sondaggio');
+        const user = document.getElementById('username').value.trim();
+        const fType = document.getElementById('f-type').value;
+        const fTime = document.getElementById('f-time').value;
+
+        const attivo = datiSondaggi.sondaggi.find(s => s.stato === "Attivo");
+        
+        if (!attivo) {
+            info.innerHTML = "❌ Nessun sondaggio attivo al momento.";
+            grid.innerHTML = "";
+            return;
+        }
+
+        info.innerHTML = `✅ Sondaggio Aperto per ${attivo.giocatori} giocatori!`;
+        
+        // Filtro base (giocatori) + extra
+        let filtrati = databaseGiochi.filter(g => attivo.giocatori >= g.minP && attivo.giocatori <= g.maxP);
+        if(fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
+        if(fTime) filtrati = filtrati.filter(g => g.time <= fTime);
+
+        grid.innerHTML = filtrati.map(g => {
+            const giaVotato = datiSondaggi.voti.some(v => v.idSondaggio === attivo.id && v.username.toLowerCase() === user.toLowerCase() && v.gioco === g.name);
+            return `
+                <div class="game-card">
+                    <img src="${g.thumb}">
+                    <div class="game-card-content">
+                        <h4>${g.name}</h4>
+                        <div style="font-size:0.75em; color: #666; margin-bottom:10px;">${g.type} | ${g.time}min</div>
+                        <button class="btn-vota" ${giaVotato || !user ? 'disabled' : ''} onclick="vota('${attivo.id}', '${g.name.replace(/'/g, "\\'")}')">
+                            ${giaVotato ? 'VOTATO' : 'VOTA'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        aggiornaClassifica();
+    }
+
+    function aggiornaClassifica() {
+        const area = document.getElementById('classifica-voti');
+        const conteggio = {};
+        const attivo = datiSondaggi.sondaggi.find(s => s.stato === "Attivo");
+        attivo.voti.forEach(v => { conteggio[v.gioco] = (conteggio[v.gioco] || 0) + 1; });
+        const ordinata = Object.entries(conteggio).sort((a,b) => b[1] - a[1]);
+        
+        area.innerHTML = ordinata.length ? ordinata.map(([gioco, voti]) => `
+            <div class="rank-item">
+                <span>${gioco}</span>
+                <span class="rank-count">${voti}</span>
+            </div>
+        `).join('') : "Nessun voto.";
+    }
+
+    async function vota(idS, gioco) {
+        const user = document.getElementById('username').value.trim();
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ azione: "vota", idSondaggio: idS, username: user, gioco: gioco }) });
+        aggiornaDati();
+    }
+
+    inizializza();
+</script>
+</body>
+</html>
