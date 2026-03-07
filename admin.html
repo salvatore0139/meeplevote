@@ -72,22 +72,6 @@
     </aside>
 </div>
 
-Ho trovato l'errore! Il problema è che nel codice che hai modificato ci sono delle variabili mescolate e non definite.
-
-Nello specifico:
-
-Usavi voto in un punto e votoFinale in un altro.
-
-Usavi tipoTradotto ma avevi dichiarato catTradotta.
-
-C'era un riferimento a ranks fuori dal suo contesto che mandava in crash il ciclo.
-
-Cosa più importante: Nel tuo XML, dopo il gioco 29, i tag sono leggermente diversi.
-
-Ecco il codice completamente corretto e testato per gestire il tuo XML. Ho pulito tutte le variabili così non possono esserci più errori di "non definito".
-
-Sostituisci tutto il blocco <script type="module"> con questo:
-JavaScript
 <script type="module">
     import { db, auth } from "./firebase.js";
     import { collection, doc, getDocs, addDoc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
