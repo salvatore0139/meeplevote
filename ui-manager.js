@@ -2,7 +2,6 @@ import { auth, db } from "./firebase.js";
 import { doc, onSnapshot, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-const ADMIN_EMAIL = "salvatoredidato01@gmail.com";
 
 // 1. Iniezione HTML e CSS della Navbar e del Modal
 function injectUI() {
@@ -87,7 +86,7 @@ function initLogic() {
         if (user) {
             loginBtn.style.display = 'none';
             profileZone.style.display = 'flex';
-            if (user.email === ADMIN_EMAIL) adminSlot.innerHTML = `<a href="admin.html">🛠 ADMIN</a>`;
+            if (user.role === 'admin') adminSlot.innerHTML = `<a href="admin.html">🛠 ADMIN</a>`;
 
             onSnapshot(doc(db, "utenti", user.uid), (snap) => {
                 if (snap.exists()) {
