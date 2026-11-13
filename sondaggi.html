@@ -195,8 +195,8 @@
         grid.innerHTML = filtrati.map(g => {
             const mioVotoPerQuestoGioco = currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
             
-            // Controllo Admin: sia tramite ruolo nel doc che tramite email per sicurezza
-            const isAdminUser = userDoc?.role === 'admin' || currentUser?.email === "salvatoredidato01@gmail.com";
+           // Controllo Admin tramite ruolo salvato su Firestore
+            const isAdminUser = userDoc?.role === 'admin';
             const canVote = currentUser && (userDoc?.validato || isAdminUser);
     
             // Controllo se questo gioco è tra quelli votati dall'utente cliccato nella sidebar
