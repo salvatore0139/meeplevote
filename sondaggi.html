@@ -226,7 +226,7 @@ grid.innerHTML = filtrati.map(g => {
             </div>
         </div>`;
 }).join('');
-
+    }
     function updateRanking() {
         const counts = {};
         currentVotes.forEach(v => counts[v.game] = (counts[v.game] || 0) + 1);
