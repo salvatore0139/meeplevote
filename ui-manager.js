@@ -78,41 +78,72 @@ function injectUI() {
 function initLogic() {
     let isLoginMode = true;
 
-    onAuthStateChanged(auth, async (user) => {
-        const loginBtn = document.getElementById('btn-login-trigger');
-        const profileZone = document.getElementById('user-profile');
-        const adminSlot = document.getElementById('admin-slot');
+    let unsubscribeUserDoc = null;
 
-        if (user) {
-            loginBtn.style.display = 'none';
-            profileZone.style.display = 'flex';
-            if (user.role === 'admin') adminSlot.innerHTML = `<a href="admin.html">🛠 ADMIN</a>`;
+onAuthStateChanged(auth, (user) => {
+    const loginBtn = document.getElementById('btn-login-trigger');
+    const profileZone = document.getElementById('user-profile');
+    const adminSlot = document.getElementById('admin-slot');
 
-            onSnapshot(doc(db, "utenti", user.uid), (snap) => {
-                if (snap.exists()) {
-                    const d = snap.data();
-                    document.getElementById('user-avatar').src = d.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                    document.getElementById('display-username').textContent = d.username || "Giocatore";
-                    
-                    const statusTxt = document.getElementById('display-status');
-                    const dot = document.getElementById('status-dot');
-                    if(d.validato) {
-                        statusTxt.textContent = "✅ Validato";
-                        statusTxt.style.color = "#27ae60";
-                        dot.className = "dot dot-valid";
-                    } else {
-                        statusTxt.textContent = "⏳ In attesa";
-                        statusTxt.style.color = "#f39c12";
-                        dot.className = "dot dot-pending";
-                    }
-                }
-            });
-        } else {
-            loginBtn.style.display = 'block';
-            profileZone.style.display = 'none';
+    // Rimuove il precedente listener
+    if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+        unsubscribeUserDoc = null;
+    }
+
+    adminSlot.innerHTML = '';
+
+    if (user) {
+        loginBtn.style.display = 'none';
+        profileZone.style.display = 'flex';
+
+        const userRef = doc(db, "utenti", user.uid);
+
+        unsubscribeUserDoc = onSnapshot(userRef, (snap) => {
+            if (!snap.exists()) {
+                adminSlot.innerHTML = '';
+                return;
+            }
+
+            const d = snap.data();
+
+            // Controllo ruolo amministratore da Firestore
+            if (d.role === 'admin') {
+                adminSlot.innerHTML = `<a href="admin.html">🛠 ADMIN</a>`;
+            } else {
+                adminSlot.innerHTML = '';
+            }
+
+            // Profilo utente
+            document.getElementById('user-avatar').src =
+                d.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+            document.getElementById('display-username').textContent =
+                d.username || "Giocatore";
+
+            const statusTxt = document.getElementById('display-status');
+            const dot = document.getElementById('status-dot');
+
+            if (d.validato) {
+                statusTxt.textContent = "✅ Validato";
+                statusTxt.style.color = "#27ae60";
+                dot.className = "dot dot-valid";
+            } else {
+                statusTxt.textContent = "⏳ In attesa";
+                statusTxt.style.color = "#f39c12";
+                dot.className = "dot dot-pending";
+            }
+        }, (error) => {
+            console.error("Errore caricamento utente:", error);
             adminSlot.innerHTML = '';
-        }
-    });
+        });
+
+    } else {
+        loginBtn.style.display = 'block';
+        profileZone.style.display = 'none';
+        adminSlot.innerHTML = '';
+    }
+});
 
     document.addEventListener('click', async (e) => {
         if (e.target.id === 'btn-login-trigger') document.getElementById('login-modal').style.display = 'block';
