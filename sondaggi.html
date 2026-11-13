@@ -192,32 +192,40 @@
         if (fType !== 'all') filtrati = filtrati.filter(g => g.type === fType);
         if (fTime) filtrati = filtrati.filter(g => g.time <= parseInt(fTime));
     
-        grid.innerHTML = filtrati.map(g => {
-            const mioVotoPerQuestoGioco = currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
-            
-           // Controllo Admin tramite ruolo salvato su Firestore
-            const isAdminUser = userDoc?.role === 'admin';
-            const canVote = currentUser && (userDoc?.validato || isAdminUser);
-    
-            // Controllo se questo gioco è tra quelli votati dall'utente cliccato nella sidebar
-            const isHighlighted = selectedUserHighlight && currentVotes.some(v => v.userId === selectedUserHighlight && v.game === g.name);
-    
-            return `
-                <div class="game-card ${isHighlighted ? 'highlight' : ''}" style="${isHighlighted ? 'order: -1;' : 'order: 0;'}">
-                    <img src="${g.thumb}">
-                    <div class="game-card-content">
-                        <h4>${g.name}</h4>
-                        <p style="font-size:0.75em; color:#777;">${g.type} | ${g.time} min</p>
-                        ${mioVotoPerQuestoGioco ? 
-                            `<button class="btn-danger" onclick="annullaVoto('${mioVotoPerQuestoGioco.id}')">❌ ANNULLA MIO VOTO</button>` :
-                            `<button class="btn-vota" ${!canVote ? 'disabled' : ''} onclick="vota('${g.name.replace(/'/g, "\\'")}')">
-                                ${!currentUser ? 'ACCEDI' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
-                            </button>`
-                        }
-                    </div>
-                </div>`;
-        }).join('');
-    }
+grid.innerHTML = filtrati.map(g => {
+
+    const isAdminUser = userDoc?.role === 'admin';
+
+    // Seleziona il voto da mostrare:
+    // - Admin: voto dell'utente selezionato nella sidebar
+    // - Utente normale: esclusivamente il proprio voto
+    const votoDaAnnullare = isAdminUser && selectedUserHighlight
+        ? currentVotes.find(v => v.userId === selectedUserHighlight && v.game === g.name)
+        : currentVotes.find(v => v.userId === currentUser?.uid && v.game === g.name);
+
+    const canVote = currentUser && (userDoc?.validato || isAdminUser);
+
+    const isHighlighted = selectedUserHighlight &&
+        currentVotes.some(v => v.userId === selectedUserHighlight && v.game === g.name);
+
+    return `
+        <div class="game-card ${isHighlighted ? 'highlight' : ''}" style="${isHighlighted ? 'order: -1;' : 'order: 0;'}">
+            <img src="${g.thumb}">
+            <div class="game-card-content">
+                <h4>${g.name}</h4>
+                <p style="font-size:0.75em; color:#777;">${g.type} | ${g.time} min</p>
+
+                ${votoDaAnnullare ?
+                    `<button class="btn-danger" onclick="annullaVoto('${votoDaAnnullare.id}')">
+                        ❌ ${isAdminUser && selectedUserHighlight ? 'ANNULLA VOTO UTENTE' : 'ANNULLA MIO VOTO'}
+                    </button>` :
+                    `<button class="btn-vota" ${!canVote ? 'disabled' : ''} onclick="vota('${g.name.replace(/'/g, "\\'")}')">
+                        ${!currentUser ? 'ACCEDI' : (canVote ? 'VOTA' : 'IN ATTESA DI OK')}
+                    </button>`
+                }
+            </div>
+        </div>`;
+}).join('');
 
     function updateRanking() {
         const counts = {};
