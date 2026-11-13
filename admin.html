@@ -128,20 +128,55 @@
 
 <script type="module">
     import { db, auth } from "./firebase.js";
-    import { collection, doc, getDocs, addDoc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import {
+    collection,
+    doc,
+    getDoc,
+    getDocs,
+    addDoc,
+    updateDoc,
+    onSnapshot,
+    query,
+    where,
+    orderBy,
+    serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     let polls = [];
 
-    // --- PROTEZIONE DASHBOARD ---
-    onAuthStateChanged(auth, (user) => {
-        if (user.role === 'admin') {
-            document.body.style.display = 'block';
-            initAdmin();
-        } else {
+    let adminInitialized = false;
+
+// --- PROTEZIONE DASHBOARD ---
+onAuthStateChanged(auth, async (user) => {
+
+    if (!user) {
+        window.location.href = "index.html";
+        return;
+    }
+
+    try {
+        const userRef = doc(db, "utenti", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists() || userSnap.data().role !== 'admin') {
+            alert("Non hai i permessi per accedere a questa pagina.");
             window.location.href = "index.html";
+            return;
         }
-    });
+
+        document.body.style.display = 'block';
+
+        if (!adminInitialized) {
+            adminInitialized = true;
+            initAdmin();
+        }
+
+    } catch (error) {
+        console.error("Errore verifica amministratore:", error);
+        window.location.href = "index.html";
+    }
+});
 
     // --- GESTIONE MODAL ---
     const gModal = document.getElementById("gameModal");
